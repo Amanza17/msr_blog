@@ -1,0 +1,2126 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Práctica 3 — Teleoperación Robótica</title>
+<style>
+  :root {
+    --bg:        #11100f;
+    --bg2:       #181715;
+    --bg3:       #211f1c;
+    --red:       #c84a4f;
+    --red-dim:   #6d3a3b;
+    --red-glow:  rgba(0, 0, 0, 0.22);
+    --red-faint: rgba(200,74,79,0.10);
+    --text:      #efebe4;
+    --text-dim:  #aaa39a;
+    --border:    #37332e;
+    --mono:      ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --head:      Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --body:      Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--body);
+    font-size: 17px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--red-dim); border-radius: 8px; }
+
+  /* ── HEADER / HERO ── */
+  header {
+    position: relative;
+    min-height: 72vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0 8vw;
+    overflow: hidden;
+  }
+
+  .hero-grid {
+    position: absolute; inset: 0;
+    background:
+      linear-gradient(180deg, rgba(24,23,21,0.78), rgba(17,16,15,0.96)),
+      linear-gradient(120deg, rgba(200,74,79,0.10), transparent 55%);
+    opacity: 1;
+  }
+
+  .hero-glow {
+    position: absolute;
+    display: none;
+  }
+
+  .badge {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .4px;
+    color: var(--red);
+    border-left: 3px solid var(--red);
+    padding: 2px 0 2px 12px;
+    margin-bottom: 28px;
+    display: inline-block;
+    animation: fadeDown .6s ease both;
+  }
+
+  h1 {
+    font-family: var(--head);
+    font-size: clamp(4rem, 10vw, 9rem);
+    line-height: 0.95;
+    letter-spacing: 0;
+    color: var(--text);
+    animation: fadeDown .8s ease .1s both;
+  }
+
+  h1 span { color: inherit; }
+
+  .hero-sub {
+    margin-top: 28px;
+    max-width: 560px;
+    color: var(--text-dim);
+    font-size: 1rem;
+    font-weight: 400;
+    animation: fadeDown .8s ease .2s both;
+  }
+
+  .scroll-hint {
+    position: absolute;
+    bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--body);
+    font-size: 12px;
+    letter-spacing: 0;
+    color: var(--text-dim);
+    animation: fadeIn 1.2s ease 1s both;
+  }
+  .scroll-hint::after {
+    content: '';
+    width: 1px; height: 36px;
+    background: var(--border);
+    animation: scrollPulse 2s ease infinite;
+  }
+  @keyframes scrollPulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  @keyframes fadeDown {
+    from { opacity:0; transform:translateY(-16px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 6vw;
+    background: rgba(17,16,15,0.90);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .nav-logo {
+    font-family: var(--body);
+    font-size: 13px;
+    color: var(--red);
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  .nav-links {
+    display: flex; gap: 32px;
+    list-style: none;
+  }
+  .nav-links a {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .2px;
+    color: var(--text-dim);
+    text-decoration: none;
+    transition: color .2s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content:''; position:absolute;
+    bottom:-3px; left:0; width:0; height:1px;
+    background:var(--red);
+    transition: width .3s;
+  }
+  .nav-links a:hover { color: var(--red); }
+  .nav-links a:hover::after { width:100%; }
+
+  /* ── MAIN LAYOUT ── */
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 80px 6vw;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section-tag {
+    font-family: var(--body);
+    font-size: 12px;
+    letter-spacing: 0;
+    color: var(--red);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .section-tag::before {
+    content:'';
+    display:inline-block;
+    width:28px; height:1px;
+    background: var(--red);
+  }
+
+  h2 {
+    font-family: var(--head);
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    color: var(--text);
+    letter-spacing: 0;
+    line-height: 1.08;
+    margin-bottom: 36px;
+  }
+
+  h3 {
+    font-family: var(--head);
+    font-size: 1.6rem;
+    color: var(--red);
+    letter-spacing: 0;
+    margin: 32px 0 12px;
+  }
+
+  /* ── CARD ── */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .3s, box-shadow .3s;
+  }
+  .card:hover {
+    border-color: var(--red-dim);
+    box-shadow: 0 8px 24px var(--red-glow);
+  }
+
+  /* ── STEP CARDS ── */
+  .steps { display: grid; gap: 20px; }
+  .step-card {
+    display: grid;
+    grid-template-columns: 60px 1fr;
+    gap: 0;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    transition: box-shadow .3s;
+  }
+  .step-card:hover { box-shadow: 0 8px 22px var(--red-glow); }
+
+  .step-num {
+    background: var(--red);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--head);
+    font-size: 1.7rem;
+    color: #fff;
+    min-height: 80px;
+  }
+  .step-content { padding: 20px 24px; }
+  .step-content strong {
+    display: block;
+    font-family: var(--body);
+    font-weight: 700;
+    font-size: 1rem;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .step-content p { font-size: .9rem; color: var(--text-dim); }
+
+  /* ── CODE BLOCK ── */
+  pre {
+    background: #27231f;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: #f6efe5;
+    overflow-x: auto;
+    line-height: 1.8;
+    position: relative;
+  }
+  pre::before {
+    content: attr(data-label);
+    position: absolute;
+    top: 8px; right: 16px;
+    font-size: 10px;
+    letter-spacing: .2px;
+    color: var(--text-dim);
+  }
+  .comment { color: var(--text-dim); }
+  .kw { color: #ffd6d6; }
+  .str { color: #ffe2a8; }
+
+  /* ── IMAGE SLOTS ── */
+  .img-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    margin: 28px 0;
+  }
+
+  .img-slot {
+    background: var(--bg3);
+    border: 1px dashed var(--border);
+    border-radius: 8px;
+    aspect-ratio: 16/9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--text-dim);
+    font-family: var(--body);
+    font-size: 13px;
+    letter-spacing: 0;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .3s, background .3s;
+  }
+  .img-slot:hover { border-color: var(--red); background: var(--red-faint); }
+  .img-slot input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  }
+  .img-slot img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: none;
+  }
+  .img-slot .slot-icon { font-size: 2rem; }
+  .img-slot .slot-label { font-size: 10px; }
+
+  .evidence-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .evidence-card .img-slot {
+    border: none;
+    border-radius: 0;
+    aspect-ratio: 16 / 10;
+    cursor: default;
+  }
+
+  .evidence-card figcaption {
+    border-top: 1px solid var(--border);
+    padding: 14px 16px;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  .evidence-card figcaption strong {
+    display: block;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 4px;
+  }
+
+  .folder-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
+    margin-top: 24px;
+  }
+
+  .folder-gallery figure {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .folder-gallery img {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    object-fit: contain;
+    display: block;
+    background: #121110;
+  }
+
+  .folder-gallery figcaption {
+    padding: 10px 12px;
+    color: var(--text-dim);
+    font-size: 12px;
+    word-break: break-word;
+  }
+
+  .pdf-viewer {
+    width: 100%;
+    height: 920px;
+    background: #121110;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 24px;
+  }
+
+  .pdf-viewer iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+  }
+
+  .media-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 72px 6vw 48px;
+    background: rgba(17,16,15,.92);
+    backdrop-filter: blur(10px);
+  }
+
+  .media-lightbox.open { display: flex; }
+
+  .media-lightbox img {
+    max-width: min(1200px, 100%);
+    max-height: calc(100vh - 150px);
+    object-fit: contain;
+    background: #121110;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    box-shadow: 0 20px 70px rgba(0,0,0,.45);
+  }
+
+  .lightbox-btn {
+    position: absolute;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: rgba(33,31,28,.92);
+    color: var(--text);
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    transition: border-color .2s, color .2s, background .2s;
+  }
+
+  .lightbox-btn:hover {
+    border-color: var(--red);
+    color: var(--red);
+    background: var(--bg3);
+  }
+
+  .lightbox-close { top: 22px; right: 6vw; }
+  .lightbox-prev { left: 2vw; top: 50%; transform: translateY(-50%); }
+  .lightbox-next { right: 2vw; top: 50%; transform: translateY(-50%); }
+
+  .lightbox-caption {
+    position: absolute;
+    left: 6vw;
+    right: 6vw;
+    bottom: 18px;
+    color: var(--text-dim);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .race-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 280;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 28px;
+    background: rgba(17,16,15,.92);
+    backdrop-filter: blur(10px);
+  }
+
+  .race-overlay.open { display: flex; }
+
+  .race-panel {
+    width: min(460px, 100%);
+    background: var(--bg2);
+    border: 1px solid var(--red-dim);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 20px 70px rgba(0,0,0,.45);
+  }
+
+  .race-hud {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .race-hud strong { color: var(--text); }
+
+  .race-btn {
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--text);
+    border-radius: 6px;
+    padding: 7px 10px;
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+  }
+
+  .race-btn:hover { border-color: var(--red); color: var(--red); }
+
+  .race-track {
+    position: relative;
+    height: 560px;
+    overflow: hidden;
+    background:
+      linear-gradient(90deg, transparent 32%, rgba(239,235,228,.16) 32% 33%, transparent 33% 66%, rgba(239,235,228,.16) 66% 67%, transparent 67%),
+      repeating-linear-gradient(180deg, #171614 0 34px, #201e1b 34px 68px);
+  }
+
+  .race-track::before,
+  .race-track::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--red-dim);
+  }
+
+  .race-track::before { left: 10px; }
+  .race-track::after { right: 10px; }
+
+  .race-robot,
+  .race-obstacle {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: translate3d(0,0,0);
+  }
+
+  .race-robot {
+    width: 46px;
+    height: 58px;
+    border: 2px solid var(--red);
+    border-radius: 8px;
+    background: linear-gradient(180deg, #2d2925, #121110);
+    box-shadow: 0 0 22px rgba(200,74,79,.22);
+  }
+
+  .race-robot::before,
+  .race-robot::after {
+    content: "";
+    position: absolute;
+    bottom: 8px;
+    width: 8px;
+    height: 24px;
+    background: #0d0c0b;
+    border-radius: 5px;
+  }
+
+  .race-robot::before { left: -8px; }
+  .race-robot::after { right: -8px; }
+
+  .race-obstacle {
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
+    border: 2px solid rgba(239,235,228,.42);
+    background: #315a52;
+    box-shadow: inset 0 0 0 8px rgba(0,0,0,.12);
+  }
+
+  .race-obstacle.blue { background: #2f4f78; }
+  .race-obstacle.red { background: #7b3030; }
+
+  .race-message {
+    position: absolute;
+    inset: auto 24px 24px;
+    display: none;
+    padding: 14px 16px;
+    background: rgba(17,16,15,.9);
+    border: 1px solid var(--red-dim);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    text-align: center;
+  }
+
+  .race-message.show { display: block; }
+
+  .konami-hint {
+    position: fixed;
+    right: 18px;
+    top: 112px;
+    z-index: 120;
+    width: 190px;
+    background: rgba(33,31,28,.94);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--red);
+    border-radius: 8px;
+    padding: 14px;
+    box-shadow: 0 12px 34px rgba(0,0,0,.24);
+  }
+
+  .konami-hint strong {
+    display: block;
+    color: var(--text);
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .konami-hint p {
+    color: var(--text-dim);
+    font-size: 12px;
+    line-height: 1.45;
+  }
+
+  .konami-code {
+    display: block;
+    margin-top: 8px;
+    color: var(--red);
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  /* ── GRAPH PLACEHOLDER ── */
+  .graph-slot {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 28px;
+    margin: 20px 0;
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .graph-title {
+    font-family: var(--body);
+    font-size: 11px;
+    letter-spacing: 0;
+    color: var(--red);
+  }
+  .graph-area {
+    flex: 1;
+    background: #121110;
+    border: 1px dashed rgba(224,27,36,0.2);
+    border-radius: 8px;
+    min-height: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-dim);
+    font-family: var(--body);
+    font-size: 13px;
+    letter-spacing: 0;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: border-color .3s;
+  }
+  .graph-area:hover { border-color: var(--red); }
+  .graph-area input[type=file] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+  }
+  .graph-area img {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain;
+    display: none;
+  }
+
+  /* ── DOWNLOAD BOX ── */
+  .download-box {
+    background: var(--bg3);
+    border: 1px solid var(--red-dim);
+    border-radius: 8px;
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .download-box .dl-info { }
+  .download-box .dl-name {
+    font-family: var(--head);
+    font-size: 1.4rem;
+    color: var(--text);
+    letter-spacing: 0;
+  }
+  .download-box .dl-size {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0;
+  }
+  .btn-red {
+    background: var(--red);
+    color: #fff;
+    font-family: var(--body);
+    font-size: 12px;
+    border: none;
+    padding: 12px 28px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background .2s, box-shadow .2s;
+  }
+  .btn-red:hover {
+    background: #9f2023;
+    box-shadow: 0 8px 20px rgba(182,42,45,.18);
+  }
+
+  /* ── URDF VIEWER ── */
+  #urdf-section {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 32px;
+    margin: 48px 0;
+  }
+
+  #urdf-viewer-wrap {
+    position: relative;
+    width: 100%;
+    height: 520px;
+    background: #f4f1ea;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 24px;
+  }
+
+  #urdf-canvas {
+    width: 100%; height: 100%;
+    display: block;
+  }
+
+  .urdf-controls {
+    position: absolute;
+    bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .urdf-controls button {
+    background: rgba(255,255,255,.92);
+    border: 1px solid #c8c0b5;
+    color: #27231f;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0;
+    padding: 8px 16px;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: border-color .2s, color .2s;
+  }
+  .urdf-controls button:hover { border-color: var(--red); color: var(--red); }
+
+  #urdf-upload-area {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 16px;
+    color: var(--text-dim);
+    font-family: var(--body);
+    font-size: 12px;
+    letter-spacing: 0;
+    cursor: pointer;
+  }
+  #urdf-upload-area input { display: none; }
+  #urdf-upload-area .upload-icon { font-size: 3rem; }
+
+  .slider-row {
+    display: flex; align-items: center; gap: 12px;
+    margin: 8px 0;
+    font-family: var(--body);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+  .slider-row label { width: 80px; }
+  .slider-row input[type=range] {
+    flex: 1;
+    accent-color: var(--red);
+    height: 4px;
+  }
+  .slider-row span { width: 48px; text-align: right; color: var(--red); }
+
+  /* ── TF TREE ── */
+  .tf-canvas-wrap {
+    background: #121110;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    width: 100%; overflow: auto;
+    padding: 20px;
+    margin-top: 20px;
+  }
+
+  /* ── INFO GRID ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin: 28px 0;
+  }
+  .info-cell {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+  }
+  .info-cell .ic-val {
+    font-family: var(--head);
+    font-size: 2.4rem;
+    color: var(--red);
+  }
+  .info-cell .ic-label {
+    font-family: var(--body);
+    font-size: 12px;
+    letter-spacing: 0;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* ── SEPARATOR ── */
+  .sep {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 60px 0;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    padding: 40px 6vw;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-family: var(--body);
+    font-size: 11px;
+    color: var(--text-dim);
+    letter-spacing: 0;
+  }
+  footer span { color: var(--red); }
+
+  /* ── FADE-IN ON SCROLL ── */
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity .6s ease, transform .6s ease;
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 600px) {
+    .nav-links { display: none; }
+    .step-card { grid-template-columns: 44px 1fr; }
+    .step-num { font-size: 1.4rem; }
+    .download-box { flex-direction: column; }
+    .pdf-viewer { height: 640px; }
+    .graph-area { min-height: 260px; }
+    .media-lightbox { padding: 72px 14px 56px; }
+    .lightbox-prev { left: 12px; }
+    .lightbox-next { right: 12px; }
+    .lightbox-btn { width: 38px; height: 38px; font-size: 21px; }
+    .race-overlay { padding: 12px; }
+    .race-track { height: 470px; }
+    .race-hud { grid-template-columns: 1fr auto; }
+    .race-hud span:last-child { display: none; }
+    .konami-hint {
+      top: auto;
+      right: 12px;
+      bottom: 12px;
+      width: min(260px, calc(100vw - 24px));
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Práctica 3</div>
+  <ul class="nav-links">
+    <li><a href="#tarea">Tarea</a></li>
+    <li><a href="#rosbag">Rosbag</a></li>
+    <li><a href="#simulacion">Simulación</a></li>
+    <li><a href="#imagenes">Imágenes</a></li>
+    <li><a href="#urdf">Modelo URDF</a></li>
+    <li><a href="#graficas">Gráficas</a></li>
+    <li><a href="#tf">Árbol TF</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<header>
+  <div class="hero-grid"></div>
+  <div class="hero-glow"></div>
+  <div class="badge">Robótica y teleoperación — Práctica 3</div>
+  <h1>Teleoperación<br>robótica</h1>
+  <p class="hero-sub">
+    Teleoperación de robot móvil con brazo manipulador mediante MoveIt y teleop_twist_keyboard.
+    Captura de datos con rosbag y análisis de comportamiento dinámico.
+  </p>
+  <div class="scroll-hint">Ver informe</div>
+</header>
+
+<main>
+
+  <!-- ── DATOS RÁPIDOS ── -->
+  <div class="info-grid reveal">
+    <div class="info-cell">
+      <div class="ic-val">3</div>
+      <div class="ic-label">Acciones</div>
+    </div>
+    <div class="info-cell">
+      <div class="ic-val">10m</div>
+      <div class="ic-label">Desplazamiento</div>
+    </div>
+    <div class="info-cell">
+      <div class="ic-val">3</div>
+      <div class="ic-label">Topics ROS</div>
+    </div>
+    <div class="info-cell">
+      <div class="ic-val">3</div>
+      <div class="ic-label">Gráficas</div>
+    </div>
+  </div>
+
+  <hr class="sep">
+
+  <!-- ── SECCIÓN: TAREA ── -->
+  <section id="tarea" class="reveal">
+    <div class="section-tag">01 — Descripción</div>
+    <h2>La tarea</h2>
+
+    <div class="card">
+      <p>
+        La práctica consiste en teleoperar un robot móvil con brazo manipulador para ejecutar una
+        secuencia de tres acciones. La manipulación se realiza con el plugin <strong>MoveIt</strong>
+        y la navegación de la base con <strong>teleop_twist_keyboard</strong> publicando comandos
+        de velocidad en <code>/cmd_vel</code>.
+      </p>
+    </div>
+
+    <div class="steps">
+      <div class="step-card">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <strong>Recoger cubo verde</strong>
+          <p>Posicionado frente al robot. El brazo se telecopera con MoveIt hasta asir el cubo y depositarlo en el compartimento del robot.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <strong>Recoger cubo azul → apilar sobre cubo rojo</strong>
+          <p>El cubo azul se encuentra a la izquierda. Con el brazo se recoge y se coloca sobre el cubo rojo situado a la derecha del robot.</p>
+        </div>
+      </div>
+      <div class="step-card">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <strong>Avanzar 10 m en línea recta</strong>
+          <p>Mediante teleop_twist_keyboard se publica velocidad lineal positiva en X hasta completar 10 metros de trayectoria rectilínea.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Captura de datos con rosbag</h3>
+    <pre data-label="BASH">
+<span class="kw">ros2</span> bag record <span class="str">/cmd_vel /imu /joint_states</span> \
+     <span class="kw">-o</span> practica3_bag
+    </pre>
+    <p>El rosbag captura los tres topics durante toda la ejecución de la secuencia.</p>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ── SECCIÓN: ROSBAG ── -->
+  <section id="rosbag" class="reveal">
+    <div class="section-tag">02 — Datos</div>
+    <h2>Rosbag</h2>
+
+    <div class="download-box">
+      <div class="dl-info">
+        <div class="dl-name">practica3_bag.db3</div>
+        <div class="dl-size">Topics: /cmd_vel · /imu · /joint_states</div>
+      </div>
+      <a id="rosbag-link" class="btn-red" href="#" download>Descargar archivo</a>
+    </div>
+
+    <div style="margin-top:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+      <input id="rosbag-file-input" type="file" accept=".db3,.mcap,.bag,.zip,.tar,.gz" onchange="setRosbagFile(this)"
+        style="flex:1; min-width:240px; background:var(--bg3); border:1px solid var(--border); color:var(--text); font-family:var(--body); font-size:13px; padding:10px 16px; border-radius:8px; outline:none;">
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ── SECCIÓN: RVIZ ── -->
+  <section id="rviz" class="reveal">
+    <div class="section-tag">03 — Visualización</div>
+    <h2>Capturas RViz</h2>
+    <div class="card">
+      <p>
+        Captura de RViz mostrando el robot con los <strong>TFs visibles</strong>,
+        la interfaz de <strong>joint_state_publisher_gui</strong> activa y al menos
+        tres articulaciones desplazadas respecto a su posición de reposo.
+      </p>
+    </div>
+    <div class="img-grid">
+      <figure class="evidence-card">
+        <div class="img-slot">
+          <img src="img/Screenshot from 2026-05-06 19-08-47.png" alt="Captura RViz 1" style="display:block;">
+        </div>
+        <figcaption><strong>RViz 1</strong>Captura del robot en RViz durante la validación visual de TFs y articulaciones.</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot">
+          <img src="img/Screenshot from 2026-05-06 19-09-00.png" alt="Captura RViz 2" style="display:block;">
+        </div>
+        <figcaption><strong>RViz 2</strong>Vista adicional de la escena con la configuración del robot cargada.</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot">
+          <img src="img/Screenshot from 2026-05-06 19-09-05.png" alt="Captura RViz 3" style="display:block;">
+        </div>
+        <figcaption><strong>RViz 3</strong>Comprobación de articulaciones desplazadas respecto a la posición de reposo.</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot">
+          <img src="img/Screenshot from 2026-05-06 19-09-12.png" alt="Captura RViz 4" style="display:block;">
+        </div>
+        <figcaption><strong>RViz 4</strong>Estado intermedio de visualización del robot y sus referencias.</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot">
+          <img src="img/Screenshot from 2026-05-06 19-09-44.png" alt="Captura RViz 5" style="display:block;">
+        </div>
+        <figcaption><strong>RViz 5</strong>Detalle de la configuración visual usada para documentar la práctica.</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot">
+          <img src="img/Screenshot from 2026-05-06 19-09-51.png" alt="Captura RViz 6" style="display:block;">
+        </div>
+        <figcaption><strong>RViz 6</strong>Captura complementaria de la interfaz de monitorización.</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot">
+          <img src="img/Screenshot from 2026-05-06 19-09-53.png" alt="Captura RViz 7" style="display:block;">
+        </div>
+        <figcaption><strong>RViz 7</strong>Vista final de la comprobación en RViz.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ── SECCIÓN: SIMULACIÓN ── -->
+  <section id="simulacion" class="reveal">
+    <div class="section-tag">04 — Simulación</div>
+    <h2>Imágenes de simulación</h2>
+    <div class="card">
+      <p>Imágenes del entorno simulado mostrando los momentos clave de la teleoperación.</p>
+    </div>
+    <div class="img-grid">
+      <figure class="evidence-card">
+        <div class="img-slot" id="slot-sim1">
+          <input type="file" accept="image/*" onchange="loadImgSlot(this,'slot-sim1')">
+          <div class="slot-icon" style="display:none;">+</div>
+          <div class="slot-label" style="display:none;">Robot sujetando cubo verde</div>
+          <img id="img-sim1" src="img/Screenshot from 2026-05-04 11-51-35.png" alt="Robot sujetando el cubo verde" style="display:block;">
+        </div>
+        <figcaption>
+          <strong>Robot sujetando el cubo verde</strong>
+          Evidencia del primer objetivo: el brazo manipula el cubo verde antes de depositarlo en el compartimento.
+        </figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot" id="slot-sim2">
+          <input type="file" accept="image/*" onchange="loadImgSlot(this,'slot-sim2')">
+          <div class="slot-icon" style="display:none;">+</div>
+          <div class="slot-label" style="display:none;">A punto de colocar cubo azul sobre rojo</div>
+          <img id="img-sim2" src="img/Screenshot from 2026-05-04 11-57-12.png" alt="Robot colocando el cubo azul sobre el cubo rojo" style="display:block;">
+        </div>
+        <figcaption>
+          <strong>Cubo azul sobre el cubo rojo</strong>
+          Evidencia del segundo objetivo: el brazo posiciona el cubo azul sobre el cubo rojo en la zona de trabajo.
+        </figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ── SECCIÓN: IMÁGENES LOCALES ── -->
+  <section id="imagenes" class="reveal">
+    <div class="section-tag">05 — Carpeta local</div>
+    <h2>Imágenes de /img</h2>
+    <div class="card">
+      <p>Esta galería carga automáticamente las imágenes disponibles en la carpeta local <code>img/</code>.</p>
+    </div>
+    <div id="img-folder-gallery" class="folder-gallery">
+      <div class="img-slot">
+        <div class="slot-icon">+</div>
+        <div class="slot-label">Esperando imágenes en img/</div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ── SECCIÓN: URDF 3D VIEWER ── -->
+  <section id="urdf">
+    <div class="section-tag">06 — Modelo</div>
+    <h2>Visor URDF 3D</h2>
+    <div class="card">
+      <p>
+        Carga tu archivo <strong>.urdf</strong> (o <strong>.urdf.xacro</strong> ya procesado) para
+        visualizar el árbol de links y joints interactivamente en 3D. Usa los sliders para rotar
+        las articulaciones y el ratón para orbitar.
+      </p>
+      <p style="margin-top:12px; color:var(--text-dim); font-size:14px;">
+        Por fallos de orientación/carga en las meshes <code>dg</code>, <code>da</code>, <code>ig</code> e <code>ia</code>,
+        no se muestran en el visor. Se mantienen como enlaces fijos dentro de la jerarquía del URDF.
+      </p>
+    </div>
+
+    <div id="urdf-section">
+      <div id="urdf-viewer-wrap">
+        <canvas id="urdf-canvas"></canvas>
+        <div id="urdf-upload-area">
+          <input type="file" id="urdf-file-input" accept=".urdf,.xml">
+          <div class="upload-icon">+</div>
+          <div id="urdf-status">Cargando urdf/modelo.urdf</div>
+          <label for="urdf-file-input" class="btn-red" style="margin-top:8px;">Seleccionar archivo</label>
+        </div>
+        <div class="urdf-controls" id="urdf-controls" style="display:none;">
+          <button onclick="resetCamera()">Reset cámara</button>
+          <button onclick="toggleWireframe()">Wireframe</button>
+          <button onclick="toggleAxes()">Ejes</button>
+        </div>
+      </div>
+
+      <div id="joint-sliders" style="margin-top:20px;"></div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ── SECCIÓN: ÁRBOL TF ── -->
+  <section id="tf" class="reveal">
+    <div class="section-tag">07 — Transformadas</div>
+    <h2>Árbol de transformadas</h2>
+    <div class="card">
+      <p>
+        El árbol TF representa las relaciones geométricas (traslación + rotación) entre
+        cada <em>frame</em> del robot publicadas en el topic <code>/tf</code> y <code>/tf_static</code>.
+        Se genera con:
+      </p>
+      <pre data-label="BASH" style="margin-top:16px;">
+<span class="kw">ros2</span> run tf2_tools view_frames
+      </pre>
+    </div>
+
+    <div class="pdf-viewer">
+      <iframe
+        src="pdf/frames_2026-05-06_19.12.59.pdf#view=FitH"
+        title="Árbol de transformadas TF">
+      </iframe>
+    </div>
+    <p style="margin-top:12px; color:var(--text-dim); font-size:14px;">
+      <a href="pdf/frames_2026-05-06_19.12.59.pdf" target="_blank" rel="noopener" style="color:var(--red);">Abrir PDF del árbol TF</a>
+    </p>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ── SECCIÓN: GRÁFICAS ── -->
+  <section id="graficas" class="reveal">
+    <div class="section-tag">08 — Análisis</div>
+    <h2>Gráficas</h2>
+
+    <!-- GRÁFICA 1 -->
+    <div class="graph-slot">
+      <div class="graph-title">01 — Posición de ruedas vs tiempo</div>
+      <div class="graph-area" id="ga-wheels">
+        <input type="file" accept="image/*" onchange="loadGraphSlot(this,'ga-wheels')">
+        <span style="display:none;">Seleccionar gráfica local</span>
+        <img id="gimg-wheels" src="img/joints.png" alt="Gráfica de posición de ruedas vs tiempo" style="display:block;">
+      </div>
+      <div class="card" style="margin-top:16px; margin-bottom:0;">
+        <h3 style="margin-top:0;">Análisis</h3>
+        <p>
+          La gráfica muestra el ángulo acumulado (en radianes) de cada rueda del robot a lo largo
+          del tiempo. Durante las fases de manipulación con el brazo, las ruedas permanecen
+          estáticas (posición constante). Al iniciarse la fase de desplazamiento rectilíneo de 10 m,
+          se observa un incremento lineal y simétrico en ambas ruedas, indicando movimiento
+          hacia adelante sin giro. Cualquier asimetría transitoria refleja correcciones del operador
+          durante la teleoperación.
+        </p>
+      </div>
+    </div>
+
+    <!-- GRÁFICA 2 -->
+    <div class="graph-slot">
+      <div class="graph-title">02 — Aceleración vs tiempo (IMU)</div>
+      <div class="graph-area" id="ga-accel">
+        <input type="file" accept="image/*" onchange="loadGraphSlot(this,'ga-accel')">
+        <span style="display:none;">Seleccionar gráfica local</span>
+        <img id="gimg-accel" src="img/imu_acc.png" alt="Gráfica de aceleración vs tiempo de la IMU" style="display:block;">
+      </div>
+      <div class="card" style="margin-top:16px; margin-bottom:0;">
+        <h3 style="margin-top:0;">Análisis</h3>
+        <p>
+          Los datos de la IMU reflejan la aceleración lineal del chasis. En reposo se aprecia la
+          componente gravitatoria en Z (~9.81 m/s²). Los picos transitorios en X corresponden a los
+          arranques y paradas de la base durante la teleoperación. Los movimientos del brazo
+          introducen vibraciones de alta frecuencia de baja amplitud, visibles como ruido sobre la
+          señal base. La fase de avance rectilíneo muestra una aceleración positiva inicial seguida
+          de valor cercano a cero en régimen estacionario.
+        </p>
+      </div>
+    </div>
+
+    <!-- GRÁFICA 3 -->
+    <div class="graph-slot">
+      <div class="graph-title">03 — Gasto (esfuerzo de joints) vs tiempo</div>
+      <div class="graph-area" id="ga-effort">
+        <input type="file" accept="image/*" onchange="loadGraphSlot(this,'ga-effort')">
+        <span style="display:none;">Seleccionar gráfica local</span>
+        <img id="gimg-effort" src="img/cmd_vel.png" alt="Gráfica de gasto vs tiempo" style="display:block;">
+      </div>
+      <div class="card" style="margin-top:16px; margin-bottom:0;">
+        <h3 style="margin-top:0;">Análisis</h3>
+        <p>
+          El campo <code>effort</code> de <code>/joint_states</code> representa el par (torque)
+          aplicado en cada articulación. Durante la recogida del cubo verde se detectan picos de
+          esfuerzo en los joints distales del brazo al soportar el peso del objeto.
+          Al apilar el cubo azul sobre el rojo, el esfuerzo aumenta en los joints proximales que
+          deben compensar el momento de inercia del brazo extendido. Durante el avance de 10 m,
+          el esfuerzo en los joints de las ruedas se mantiene aproximadamente constante.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <hr class="sep">
+
+  <!-- ── SECCIÓN: CÓDIGO ── -->
+  <section id="codigo" class="reveal">
+    <div class="section-tag">09 — Reproducibilidad</div>
+    <h2>Comandos clave</h2>
+
+    <h3>Lanzar simulación</h3>
+    <pre data-label="BASH">
+<span class="kw">ros2</span> launch my_robot_pkg simulation.launch.py
+    </pre>
+
+    <h3>Arrancar MoveIt</h3>
+    <pre data-label="BASH">
+<span class="kw">ros2</span> launch moveit_config demo.launch.py
+    </pre>
+
+    <h3>Teleoperación de la base</h3>
+    <pre data-label="BASH">
+<span class="kw">ros2</span> run teleop_twist_keyboard teleop_twist_keyboard \
+     <span class="kw">--ros-args</span> <span class="str">-r /cmd_vel:=/cmd_vel</span>
+    </pre>
+
+    <h3>Graficar datos del rosbag</h3>
+    <pre data-label="PYTHON">
+<span class="kw">import</span> rosbag2_py, matplotlib.pyplot <span class="kw">as</span> plt
+<span class="comment"># Leer mensajes de /joint_states, /imu y /cmd_vel</span>
+<span class="comment"># Extraer stamps, positions, effort, linear_acceleration</span>
+<span class="comment"># Graficar con matplotlib</span>
+    </pre>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer>
+  <div>Práctica 3 — Teleoperación robótica</div>
+  <div>Informe con recursos locales</div>
+</footer>
+
+<div class="media-lightbox" id="media-lightbox" aria-hidden="true">
+  <button class="lightbox-btn lightbox-close" type="button" aria-label="Cerrar visor">×</button>
+  <button class="lightbox-btn lightbox-prev" type="button" aria-label="Imagen anterior">‹</button>
+  <img id="lightbox-img" src="" alt="">
+  <button class="lightbox-btn lightbox-next" type="button" aria-label="Imagen siguiente">›</button>
+  <div class="lightbox-caption" id="lightbox-caption"></div>
+</div>
+
+<div class="race-overlay" id="race-overlay" aria-hidden="true">
+  <div class="race-panel">
+    <div class="race-hud">
+      <strong>Teleop Race</strong>
+      <span id="race-distance">0.0 m</span>
+      <button class="race-btn" id="race-close" type="button">Cerrar</button>
+    </div>
+    <div class="race-track" id="race-track" tabindex="0" aria-label="Juego de carrera del robot">
+      <div class="race-robot" id="race-robot"></div>
+      <div class="race-message" id="race-message"></div>
+    </div>
+    <div class="race-hud">
+      <span>Flechas izquierda/derecha para esquivar cubos</span>
+      <button class="race-btn" id="race-restart" type="button">Reiniciar</button>
+      <span>Meta: 10 m</span>
+    </div>
+  </div>
+</div>
+
+<aside class="konami-hint" aria-label="Pista del easter egg">
+  <strong>¿Sabías que?</strong>
+  <p>Hay una carrera oculta de teleoperación.</p>
+  <span class="konami-code">↑ ↑ ↓ ↓ ← → ← →</span>
+</aside>
+
+
+<script>
+/* ───────────────────────────────────────────
+   UTILITIES
+─────────────────────────────────────────── */
+function loadImgSlot(input, slotId) {
+  const file = input.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const slot = document.getElementById(slotId);
+  const img = slot.querySelector('img');
+  const label = slot.querySelector('.slot-label');
+  const icon = slot.querySelector('.slot-icon');
+
+  if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+    img.removeAttribute('src');
+    img.style.display = 'none';
+    if (icon) icon.style.display = 'none';
+    if (label) {
+      label.textContent = file.name;
+      label.style.display = 'block';
+    }
+    slot.onclick = () => window.open(url, '_blank');
+    return;
+  }
+
+  img.src = url;
+  img.style.display = 'block';
+  slot.querySelectorAll('.slot-icon, .slot-label').forEach(el => el.style.display = 'none');
+}
+
+function loadGraphSlot(input, areaId) {
+  const file = input.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  const area = document.getElementById(areaId);
+  const img = area.querySelector('img');
+  img.src = url;
+  img.style.display = 'block';
+  area.querySelector('span').style.display = 'none';
+}
+
+function setRosbagFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const link = document.getElementById('rosbag-link');
+  link.href = URL.createObjectURL(file);
+  link.download = file.name;
+  link.textContent = `Descargar ${file.name}`;
+  document.querySelector('.download-box .dl-name').textContent = file.name;
+  link.style.boxShadow = '0 8px 20px rgba(182,42,45,.18)';
+}
+
+async function loadImageFolder() {
+  const gallery = document.getElementById('img-folder-gallery');
+  if (!gallery) return;
+
+  try {
+    const response = await fetch('img/');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const imageItems = [...doc.querySelectorAll('a')]
+      .map(a => a.getAttribute('href') || '')
+      .filter(href => /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(href))
+      .map(href => ({
+        src: new URL(href, new URL('img/', window.location.href)).href,
+        name: decodeURIComponent(href.split('/').pop())
+      }));
+
+    if (!imageItems.length) return;
+
+    gallery.innerHTML = '';
+    const seen = new Set();
+    imageItems.forEach(({ src, name }) => {
+      if (seen.has(src)) return;
+      seen.add(src);
+      const figure = document.createElement('figure');
+      const img = document.createElement('img');
+      const caption = document.createElement('figcaption');
+      img.src = src;
+      img.alt = name;
+      img.loading = 'lazy';
+      caption.textContent = name;
+      figure.append(img, caption);
+      gallery.appendChild(figure);
+    });
+  } catch (error) {
+    console.warn('No se pudo leer la carpeta img/:', error);
+  }
+}
+
+function initMediaLightbox() {
+  const lightbox = document.getElementById('media-lightbox');
+  const lightboxImg = document.getElementById('lightbox-img');
+  const caption = document.getElementById('lightbox-caption');
+  if (!lightbox || !lightboxImg || !caption) return;
+
+  const images = [...document.querySelectorAll('.evidence-card img, .graph-area img, .folder-gallery img')]
+    .filter(img => img.getAttribute('src'));
+  let activeIndex = 0;
+
+  images.forEach((img, index) => {
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', event => {
+      event.preventDefault();
+      activeIndex = index;
+      openLightbox();
+    });
+  });
+
+  function imageLabel(img) {
+    const figure = img.closest('figure');
+    const strong = figure?.querySelector('figcaption strong')?.textContent;
+    return strong || img.getAttribute('alt') || '';
+  }
+
+  function renderImage() {
+    const img = images[activeIndex];
+    lightboxImg.src = img.src;
+    lightboxImg.alt = img.alt || imageLabel(img);
+    caption.textContent = `${activeIndex + 1} / ${images.length} · ${imageLabel(img)}`;
+  }
+
+  function openLightbox() {
+    renderImage();
+    lightbox.classList.add('open');
+    lightbox.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    lightbox.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  function step(delta) {
+    activeIndex = (activeIndex + delta + images.length) % images.length;
+    renderImage();
+  }
+
+  lightbox.querySelector('.lightbox-close').addEventListener('click', closeLightbox);
+  lightbox.querySelector('.lightbox-prev').addEventListener('click', () => step(-1));
+  lightbox.querySelector('.lightbox-next').addEventListener('click', () => step(1));
+  lightbox.addEventListener('click', event => {
+    if (event.target === lightbox) closeLightbox();
+  });
+  document.addEventListener('keydown', event => {
+    if (!lightbox.classList.contains('open')) return;
+    if (event.key === 'Escape') closeLightbox();
+    if (event.key === 'ArrowLeft') step(-1);
+    if (event.key === 'ArrowRight') step(1);
+  });
+}
+
+loadImageFolder().finally(initMediaLightbox);
+
+function initEasterEgg() {
+  const overlay = document.getElementById('race-overlay');
+  const track = document.getElementById('race-track');
+  const robot = document.getElementById('race-robot');
+  const distanceEl = document.getElementById('race-distance');
+  const message = document.getElementById('race-message');
+  const closeBtn = document.getElementById('race-close');
+  const restartBtn = document.getElementById('race-restart');
+  if (!overlay || !track || !robot || !distanceEl || !message || !closeBtn || !restartBtn) return;
+
+  const code = ['ArrowUp', 'ArrowUp', 'ArrowDown', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'ArrowLeft', 'ArrowRight'];
+  const buffer = [];
+  const lanes = [0.18, 0.5, 0.82];
+  const colors = ['', 'blue', 'red'];
+  let lane = 1;
+  let distance = 0;
+  let obstacles = [];
+  let running = false;
+  let lastTime = 0;
+  let spawnTimer = 0;
+  let frameId = 0;
+
+  document.addEventListener('keydown', event => {
+    if (overlay.classList.contains('open')) {
+      if (event.key === 'ArrowLeft') { event.preventDefault(); lane = Math.max(0, lane - 1); }
+      if (event.key === 'ArrowRight') { event.preventDefault(); lane = Math.min(2, lane + 1); }
+      if (event.key === 'Escape') closeRace();
+      return;
+    }
+
+    const key = event.key.length === 1 ? event.key.toLowerCase() : event.key;
+    buffer.push(key);
+    if (buffer.length > code.length) buffer.shift();
+
+    if (code.every((expected, index) => buffer[index] === expected)) {
+      openRace();
+      buffer.length = 0;
+    }
+  });
+
+  closeBtn.addEventListener('click', closeRace);
+  restartBtn.addEventListener('click', startRace);
+
+  function openRace() {
+    overlay.classList.add('open');
+    overlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+    track.focus();
+    startRace();
+  }
+
+  function closeRace() {
+    running = false;
+    cancelAnimationFrame(frameId);
+    overlay.classList.remove('open');
+    overlay.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  function startRace() {
+    running = true;
+    lane = 1;
+    distance = 0;
+    spawnTimer = 0;
+    lastTime = performance.now();
+    message.classList.remove('show');
+    obstacles.forEach(item => item.el.remove());
+    obstacles = [];
+    updateRobot();
+    updateDistance();
+    cancelAnimationFrame(frameId);
+    frameId = requestAnimationFrame(tick);
+  }
+
+  function updateRobot() {
+    const x = lanes[lane] * track.clientWidth - 23;
+    const y = track.clientHeight - 82;
+    robot.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+  }
+
+  function updateDistance() {
+    distanceEl.textContent = `${distance.toFixed(1)} m`;
+  }
+
+  function spawnObstacle() {
+    const obstacleLane = Math.floor(Math.random() * lanes.length);
+    const el = document.createElement('div');
+    el.className = `race-obstacle ${colors[Math.floor(Math.random() * colors.length)]}`;
+    track.appendChild(el);
+    obstacles.push({ el, lane: obstacleLane, y: -52 });
+  }
+
+  function endRace(text) {
+    running = false;
+    message.textContent = text;
+    message.classList.add('show');
+  }
+
+  function tick(now) {
+    if (!running) return;
+    const dt = Math.min(0.04, (now - lastTime) / 1000);
+    lastTime = now;
+    distance += dt * 2.1;
+    spawnTimer -= dt;
+
+    if (spawnTimer <= 0) {
+      spawnObstacle();
+      spawnTimer = Math.max(0.45, 1.0 - distance * 0.04);
+    }
+
+    updateRobot();
+    updateDistance();
+
+    const trackWidth = track.clientWidth;
+    const trackHeight = track.clientHeight;
+    obstacles.forEach(item => {
+      item.y += dt * (185 + distance * 14);
+      const x = lanes[item.lane] * trackWidth - 21;
+      item.el.style.transform = `translate3d(${x}px, ${item.y}px, 0)`;
+
+      const robotY = trackHeight - 82;
+      if (item.lane === lane && item.y > robotY - 36 && item.y < robotY + 50) {
+        endRace(`Choque con cubo a ${distance.toFixed(1)} m. Reinicia e intenta llegar a 10 m.`);
+      }
+    });
+
+    obstacles = obstacles.filter(item => {
+      if (item.y < trackHeight + 60) return true;
+      item.el.remove();
+      return false;
+    });
+
+    if (distance >= 10) {
+      distance = 10;
+      updateDistance();
+      endRace('Meta alcanzada: 10 m en línea recta completados.');
+    }
+
+    frameId = requestAnimationFrame(tick);
+  }
+}
+
+initEasterEgg();
+
+/* ───────────────────────────────────────────
+   SCROLL REVEAL
+─────────────────────────────────────────── */
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+/* ───────────────────────────────────────────
+   URDF 3D VIEWER  (Three.js via CDN)
+─────────────────────────────────────────── */
+(function () {
+  const DEFAULT_URDF_PATH = 'urdf/modelo.urdf';
+  const canvas  = document.getElementById('urdf-canvas');
+  const upload  = document.getElementById('urdf-upload-area');
+  const controls= document.getElementById('urdf-controls');
+  const fileInput= document.getElementById('urdf-file-input');
+  const status = document.getElementById('urdf-status');
+
+  let renderer, scene, camera, currentRobotRoot, groundGrid;
+  let cameraTarget, spherical = {theta: 0, phi: 1.15, radius: 6};
+  let wireframe = false, axesHelper = null;
+  let jointsByChild = [];
+  let THREE;
+
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+  script.onload = () => {
+    THREE = window.THREE;
+    const colladaScript = document.createElement('script');
+    colladaScript.src = 'https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/ColladaLoader.js';
+    colladaScript.onload = () => { initScene(); loadDefaultURDF(); };
+    colladaScript.onerror = () => { initScene(); loadDefaultURDF(); };
+    document.head.appendChild(colladaScript);
+  };
+  document.head.appendChild(script);
+
+  function initScene() {
+    renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+    renderer.shadowMap.enabled = true;
+
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf4f1ea);
+
+    camera = new THREE.PerspectiveCamera(50, canvas.clientWidth / canvas.clientHeight, 0.01, 100);
+    cameraTarget = new THREE.Vector3(0, 0, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+    const dir = new THREE.DirectionalLight(0xffffff, 1.1);
+    dir.position.set(2, 4, 3);
+    scene.add(dir);
+    const fill = new THREE.DirectionalLight(0xc84a4f, 0.5);
+    fill.position.set(-3, 2, -2);
+    scene.add(fill);
+
+    groundGrid = new THREE.GridHelper(6, 12, 0xb9aca0, 0xd7cec3);
+    scene.add(groundGrid);
+
+    setupOrbit();
+    window.addEventListener('resize', onResize);
+    animate();
+  }
+
+  let isDragging = false, prevMouse = {x:0,y:0};
+  function setupOrbit() {
+    canvas.addEventListener('mousedown', e => { isDragging = true; prevMouse = {x:e.clientX, y:e.clientY}; });
+    window.addEventListener('mouseup', () => isDragging = false);
+    canvas.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      const dx = e.clientX - prevMouse.x, dy = e.clientY - prevMouse.y;
+      spherical.theta -= dx * 0.01;
+      spherical.phi   = Math.max(0.1, Math.min(Math.PI - 0.1, spherical.phi + dy * 0.01));
+      prevMouse = {x:e.clientX, y:e.clientY};
+      updateCamera();
+    });
+    canvas.addEventListener('wheel', e => {
+      spherical.radius = Math.max(0.5, Math.min(10, spherical.radius + e.deltaY * 0.005));
+      updateCamera();
+    });
+  }
+
+  function updateCamera() {
+    const { theta, phi, radius } = spherical;
+    camera.position.set(
+      cameraTarget.x + radius * Math.sin(phi) * Math.sin(theta),
+      cameraTarget.y + radius * Math.cos(phi),
+      cameraTarget.z + radius * Math.sin(phi) * Math.cos(theta)
+    );
+    camera.lookAt(cameraTarget);
+  }
+
+  function animate() {
+    animId = requestAnimationFrame(animate);
+    renderer.render(scene, camera);
+  }
+
+  function onResize() {
+    const w = canvas.clientWidth, h = canvas.clientHeight;
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  }
+
+  fileInput.addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = ev => parseURDF(ev.target.result);
+    reader.readAsText(file);
+  });
+
+  async function loadDefaultURDF() {
+    try {
+      const response = await fetch(DEFAULT_URDF_PATH);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const text = await response.text();
+      parseURDF(text);
+      if (status) status.textContent = DEFAULT_URDF_PATH;
+    } catch (error) {
+      if (status) {
+        status.textContent = 'No se pudo cargar urdf/modelo.urdf automáticamente';
+      }
+      console.warn('Carga automática de URDF fallida:', error);
+    }
+  }
+
+  function parseURDF(text) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(text, 'text/xml');
+    const links  = [...doc.querySelectorAll('link')];
+    const joints = [...doc.querySelectorAll('joint')];
+
+    if (!links.length) {
+      if (status) status.textContent = 'El URDF no contiene links reconocibles';
+      return;
+    }
+
+    scene.children.filter(c => c.userData.urdfRoot).forEach(c => scene.remove(c));
+    jointsByChild = [];
+    document.getElementById('joint-sliders').innerHTML = '';
+
+    const robotRoot = new THREE.Group();
+    robotRoot.userData.urdfRoot = true;
+    // URDF uses Z as up. Three.js uses Y as up.
+    robotRoot.rotation.x = -Math.PI / 2;
+    currentRobotRoot = robotRoot;
+    scene.add(robotRoot);
+
+    const materialMap = readMaterials(doc);
+    const linkMap = {};
+
+    links.forEach((linkNode, index) => {
+      const name = linkNode.getAttribute('name');
+      const group = new THREE.Group();
+      group.name = name;
+      group.userData.urdf = true;
+      linkMap[name] = group;
+
+      if (['dg_link', 'da_link', 'ig_link', 'ia_link'].includes(name)) return;
+
+      const visuals = [...linkNode.children].filter(node => node.tagName === 'visual');
+      visuals.forEach((visual, visualIndex) => {
+        const visualObject = createVisualObject(visual, materialMap, index + visualIndex, name);
+        if (visualObject) group.add(visualObject);
+      });
+    });
+
+    const children = new Set();
+    const jointDefs = joints.map(jointNode => {
+      const parent = jointNode.querySelector('parent')?.getAttribute('link');
+      const child = jointNode.querySelector('child')?.getAttribute('link');
+      if (!parent || !child || !linkMap[parent] || !linkMap[child]) return null;
+
+      const jointGroup = new THREE.Group();
+      jointGroup.name = jointNode.getAttribute('name') || `${parent}_to_${child}`;
+      jointGroup.userData.urdf = true;
+      setOrigin(jointGroup, jointNode.querySelector('origin'));
+      jointGroup.userData.basePosition = jointGroup.position.clone();
+      jointGroup.userData.baseQuaternion = jointGroup.quaternion.clone();
+      jointGroup.add(linkMap[child]);
+      linkMap[parent].add(jointGroup);
+      children.add(child);
+
+      const type = jointNode.getAttribute('type') || 'fixed';
+      const axis = parseVec(jointNode.querySelector('axis')?.getAttribute('xyz'), [0, 0, 1]);
+      const def = {
+        name: jointGroup.name,
+        childLink: child,
+        type,
+        axis,
+        group: jointGroup,
+        limit: readJointLimit(jointNode, type)
+      };
+
+      if (type === 'revolute' || type === 'continuous' || type === 'prismatic') {
+        jointsByChild.push(def);
+        return def;
+      }
+      return null;
+    }).filter(Boolean);
+
+    Object.keys(linkMap).forEach(name => {
+      if (!children.has(name)) robotRoot.add(linkMap[name]);
+    });
+
+    fitCamera(robotRoot);
+    buildJointSliders(jointDefs);
+
+    upload.style.display = 'none';
+    controls.style.display = 'flex';
+  }
+
+  function buildJointSliders(jointDefs) {
+    const sliderContainer = document.getElementById('joint-sliders');
+    if (jointDefs.length > 0) {
+      const title = document.createElement('div');
+      title.className = 'graph-title';
+      title.textContent = 'Articulaciones';
+      title.style.marginBottom = '12px';
+      sliderContainer.appendChild(title);
+    }
+
+    jointDefs.forEach(jd => {
+      const row = document.createElement('div');
+      row.className = 'slider-row';
+      const min = jd.limit.min;
+      const max = jd.limit.max;
+      const step = jd.type === 'prismatic' ? 0.01 : 1;
+      const value = Math.min(Math.max(0, min), max);
+      row.innerHTML = `
+        <label>${jd.name.slice(0,10)}</label>
+        <input type="range" min="${min}" max="${max}" value="${value}" step="${step}">
+        <span>${formatJointValue(value, jd.type)}</span>
+      `;
+      row.querySelector('input').addEventListener('input', function() {
+        setJointValue(jd, Number(this.value));
+        row.querySelector('span').textContent = formatJointValue(Number(this.value), jd.type);
+      });
+      sliderContainer.appendChild(row);
+      setJointValue(jd, value);
+    });
+  }
+
+  function parseVec(value, fallback = [0, 0, 0]) {
+    if (!value) return fallback;
+    const parsed = value.trim().split(/\s+/).map(Number);
+    return parsed.length >= 3 && parsed.every(Number.isFinite) ? parsed : fallback;
+  }
+
+  function setOrigin(object, origin) {
+    const xyz = parseVec(origin?.getAttribute('xyz'), [0, 0, 0]);
+    const rpy = parseVec(origin?.getAttribute('rpy'), [0, 0, 0]);
+    object.position.set(xyz[0], xyz[1], xyz[2]);
+    object.rotation.set(rpy[0], rpy[1], rpy[2], 'XYZ');
+  }
+
+  function readJointLimit(joint, type) {
+    const limit = joint.querySelector('limit');
+    if (type === 'prismatic') {
+      return {
+        min: Number(limit?.getAttribute('lower') ?? -0.5),
+        max: Number(limit?.getAttribute('upper') ?? 0.5)
+      };
+    }
+    if (type === 'continuous') return { min: -180, max: 180 };
+
+    const lower = Number(limit?.getAttribute('lower') ?? -Math.PI);
+    const upper = Number(limit?.getAttribute('upper') ?? Math.PI);
+    return {
+      min: Math.round(lower * 180 / Math.PI),
+      max: Math.round(upper * 180 / Math.PI)
+    };
+  }
+
+  function formatJointValue(value, type) {
+    if (type === 'prismatic') return `${Number(value).toFixed(2)}m`;
+    return `${Math.round(value)}°`;
+  }
+
+  function makeMaterial(color) {
+    return new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.62,
+      metalness: 0.16,
+      wireframe
+    });
+  }
+
+  function readMaterials(doc) {
+    const materials = {};
+    [...doc.querySelectorAll('robot > material')].forEach(material => {
+      const name = material.getAttribute('name');
+      const rgba = parseVec(material.querySelector('color')?.getAttribute('rgba'), null);
+      if (!name || !rgba) return;
+      materials[name] = new THREE.Color(rgba[0], rgba[1], rgba[2]);
+    });
+    return materials;
+  }
+
+  function getVisualColor(visual, materialMap, fallbackIndex) {
+    const materialName = visual.querySelector('material')?.getAttribute('name');
+    const fallback = [0xc84a4f, 0x77716a, 0x0b2fbd, 0x1c1c1c, 0xd9a441][fallbackIndex % 5];
+    return materialMap[materialName] || fallback;
+  }
+
+  function createVisualObject(visual, materialMap, fallbackIndex, linkName) {
+    const geometryNode = visual.querySelector('geometry');
+    if (!geometryNode) return null;
+
+    const color = getVisualColor(visual, materialMap, fallbackIndex);
+    const meshNode = geometryNode.querySelector('mesh');
+    const geometry = createGeometry(geometryNode, linkName);
+    if (!geometry) return null;
+
+    const container = new THREE.Group();
+    container.userData.urdf = true;
+    setOrigin(container, visual.querySelector('origin'));
+    if (['dg_link', 'da_link', 'ig_link', 'ia_link'].includes(linkName)) {
+      container.rotation.set(0, 0, 0, 'XYZ');
+      const side = linkName.startsWith('i') ? -1 : 1;
+      const isArm = linkName === 'da_link' || linkName === 'ia_link';
+      container.rotation.z = side * (isArm ? -0.35 : 0.35);
+    }
+
+    const fallbackMesh = new THREE.Mesh(geometry, makeMaterial(color));
+    fallbackMesh.userData.urdf = true;
+    container.add(fallbackMesh);
+
+    if (meshNode) {
+      const path = resolveMeshPath(meshNode.getAttribute('filename') || '');
+      const scale = parseVec(meshNode.getAttribute('scale'), [1, 1, 1]);
+      loadColladaMesh(path, scale, color, container, linkName);
+    }
+
+    return container;
+  }
+
+  function resolveMeshPath(filename) {
+    return filename
+      .replace(/^package:\/\/[^/]+\//, '')
+      .replace(/^(\.\.\/)+/, '')
+      .replace(/^\.?\//, '');
+  }
+
+  function loadColladaMesh(path, scale, color, container, linkName = '') {
+    if (!path || !window.THREE.ColladaLoader) return;
+
+    const loader = new THREE.ColladaLoader();
+    loader.load(path, collada => {
+      const model = collada.scene;
+      // ColladaLoader converts Z_UP DAE files to Three's Y_UP. The URDF tree is
+      // still Z_UP until robotRoot rotates it, so undo that conversion locally.
+      if (!['dg_link', 'da_link', 'ig_link', 'ia_link'].includes(linkName)) {
+        model.rotation.x += Math.PI / 2;
+      }
+      model.scale.set(scale[0], scale[1], scale[2]);
+      model.traverse(node => {
+        if (!node.isMesh) return;
+        node.material = makeMaterial(color);
+        node.castShadow = true;
+        node.receiveShadow = true;
+      });
+      container.clear();
+      container.add(model);
+      console.info(`Mesh DAE cargada: ${path}`);
+      if (currentRobotRoot) fitCamera(currentRobotRoot);
+    }, undefined, error => {
+      console.warn(`No se pudo cargar ${path}; usando fallback`, error);
+    });
+  }
+
+  function createGeometry(geometryNode, linkName = '') {
+    const box = geometryNode.querySelector('box');
+    const cylinder = geometryNode.querySelector('cylinder');
+    const sphere = geometryNode.querySelector('sphere');
+    const mesh = geometryNode.querySelector('mesh');
+    const link = linkName.toLowerCase();
+
+    if (box) {
+      const size = parseVec(box.getAttribute('size'), [0.1, 0.1, 0.1]);
+      return new THREE.BoxGeometry(size[0], size[1], size[2]);
+    }
+    if (cylinder) {
+      const radius = Number(cylinder.getAttribute('radius') || 0.05);
+      const length = Number(cylinder.getAttribute('length') || 0.1);
+      const geometry = new THREE.CylinderGeometry(radius, radius, length, 32);
+      geometry.rotateX(Math.PI / 2);
+      return geometry;
+    }
+    if (sphere) {
+      const radius = Number(sphere.getAttribute('radius') || 0.05);
+      return new THREE.SphereGeometry(radius, 32, 20);
+    }
+    if (!mesh) return null;
+
+    const filename = (mesh.getAttribute('filename') || '').toLowerCase();
+    const scale = parseVec(mesh.getAttribute('scale'), [1, 1, 1]);
+
+    if (filename.includes('torus')) {
+      const radius = Math.max(scale[0], scale[1]) * 0.5;
+      const tube = Math.max(0.035, Math.min(scale[0], scale[1]) * 0.18);
+      return new THREE.TorusGeometry(radius, tube, 20, 56);
+    }
+    if (filename.includes('cylinder')) {
+      const axis = link.includes('brazo') ? 0 : 2;
+      const radius = link.includes('brazo')
+        ? Math.max(0.04, Math.max(scale[1], scale[2]) * 0.55)
+        : Math.max(0.04, Math.max(scale[0], scale[1]) * 0.55);
+      const length = Math.max(0.08, scale[axis] * 2);
+      const geometry = new THREE.CylinderGeometry(radius, radius, length, 36);
+      if (axis === 0) geometry.rotateZ(Math.PI / 2);
+      if (axis === 2) geometry.rotateX(Math.PI / 2);
+      return geometry;
+    }
+    if (filename.includes('cube')) {
+      if (['dg_link', 'da_link', 'ig_link', 'ia_link'].includes(link)) {
+        const length = scale[2] * 2;
+        const thickness = Math.max(0.055, scale[0] * 1.6);
+        return new THREE.BoxGeometry(length, thickness, thickness);
+      }
+      return new THREE.BoxGeometry(scale[0] * 2, scale[1] * 2, scale[2] * 2);
+    }
+    return new THREE.BoxGeometry(
+      Math.max(0.05, scale[0]),
+      Math.max(0.05, scale[1]),
+      Math.max(0.05, scale[2])
+    );
+  }
+
+  function fitCamera(object) {
+    object.position.set(0, 0, 0);
+    object.updateWorldMatrix(true, true);
+    const box = new THREE.Box3().setFromObject(object);
+    const size = box.getSize(new THREE.Vector3());
+    const maxSize = Math.max(size.x, size.y, size.z, 1);
+    const cajon = object.getObjectByName('cajon_link');
+    const baseBox = cajon ? new THREE.Box3().setFromObject(cajon) : box;
+    const baseCenter = baseBox.getCenter(new THREE.Vector3());
+
+    object.position.set(-baseCenter.x, -baseBox.min.y, -baseCenter.z);
+    object.updateWorldMatrix(true, true);
+    const placedBox = new THREE.Box3().setFromObject(object);
+    const placedSize = placedBox.getSize(new THREE.Vector3());
+    cameraTarget.set(0, placedSize.y * 0.42, 0);
+    if (groundGrid) groundGrid.position.set(0, 0, 0);
+    spherical = { theta: 0, phi: 1.2, radius: maxSize * 2.1 };
+    updateCamera();
+  }
+
+  function setJointValue(joint, value) {
+    joint.group.position.copy(joint.group.userData.basePosition);
+    joint.group.quaternion.copy(joint.group.userData.baseQuaternion);
+
+    if (joint.type === 'prismatic') {
+      const offset = new THREE.Vector3(joint.axis[0], joint.axis[1], joint.axis[2]).multiplyScalar(value);
+      joint.group.position.add(offset);
+      return;
+    }
+
+    const rad = value * Math.PI / 180;
+    const axis = new THREE.Vector3(joint.axis[0], joint.axis[1], joint.axis[2]).normalize();
+    const rotation = new THREE.Quaternion().setFromAxisAngle(axis, rad);
+    joint.group.quaternion.multiply(rotation);
+  }
+
+  window.resetCamera = function() {
+    if (currentRobotRoot) fitCamera(currentRobotRoot);
+    else {
+      spherical = {theta: 0.5, phi: 1.0, radius: 2.5};
+      updateCamera();
+    }
+  };
+
+  window.toggleWireframe = function() {
+    wireframe = !wireframe;
+    scene.traverse(c => {
+      if (c.material) c.material.wireframe = wireframe;
+    });
+  };
+
+  window.toggleAxes = function() {
+    if (axesHelper) { scene.remove(axesHelper); axesHelper = null; }
+    else { axesHelper = new THREE.AxesHelper(0.5); axesHelper.userData.urdf = false; scene.add(axesHelper); }
+  };
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robot Control System | Práctica 3</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@400;500;700&family=JetBrains+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #0a0a0a;
+    --bg-panel: #121212;
+    --red-main: #ff1f1f;
+    --red-dim: #8b0000;
+    --red-glow: rgba(255, 31, 31, 0.15);
+    --text-high: #e0e0e0;
+    --text-mid: #a0a0a0;
+    --border: #222;
+    --mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg-dark);
+    color: var(--text-high);
+    font-family: 'Rajdhani', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* --- Estética de Fondo --- */
+  body::before {
+    content: "";
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: radial-gradient(circle at 50% 50%, #1a0505 0%, #0a0a0a 100%);
+    z-index: -1;
+  }
+
+  /* --- Header --- */
+  header {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 8%;
+    border-bottom: 2px solid var(--red-main);
+    background: linear-gradient(90deg, #0a0a0a 0%, transparent 100%);
+  }
+
+  .tech-id {
+    font-family: var(--mono);
+    color: var(--red-main);
+    font-size: 14px;
+    letter-spacing: 4px;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(2.5rem, 8vw, 5rem);
+    line-height: 1;
+    text-transform: uppercase;
+    color: #fff;
+    text-shadow: 0 0 20px var(--red-glow);
+  }
+
+  h1 span { color: var(--red-main); }
+
+  /* --- Main Layout --- */
+  main { max-width: 1200px; margin: 0 auto; padding: 60px 20px; }
+
+  h2 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5rem;
+    margin: 60px 0 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    color: var(--red-main);
+  }
+
+  h2::before { content: '['; }
+  h2::after { content: ']'; flex: 1; height: 1px; background: linear-gradient(90deg, var(--border), transparent); }
+
+  /* --- Cards & Containers --- */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+  }
+
+  .card {
+    background: var(--bg-panel);
+    border: 1px solid var(--border);
+    padding: 30px;
+    position: relative;
+    transition: transform 0.3s ease;
+  }
+
+  .card:hover { border-color: var(--red-main); box-shadow: 0 0 15px var(--red-glow); }
+
+  .card::before {
+    content: ''; position: absolute; top: -1px; left: -1px; width: 10px; height: 10px;
+    border-top: 2px solid var(--red-main); border-left: 2px solid var(--red-main);
+  }
+
+  /* --- Visor 3D Section --- */
+  .visor-wrapper {
+    grid-column: 1 / -1;
+    height: 600px;
+    background: #000;
+    border: 1px solid var(--border);
+    position: relative;
+    border-radius: 4px;
+  }
+
+  #urdf-container { width: 100%; height: 100%; cursor: move; }
+
+  .visor-overlay {
+    position: absolute;
+    top: 20px; right: 20px;
+    background: rgba(0,0,0,0.7);
+    padding: 15px;
+    border: 1px solid var(--red-dim);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  /* --- Media --- */
+  .img-box {
+    width: 100%;
+    height: 250px;
+    background: #050505;
+    border: 1px solid var(--border);
+    overflow: hidden;
+    margin-bottom: 15px;
+  }
+
+  .img-box img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(0.5) contrast(1.2); }
+  .card:hover .img-box img { filter: grayscale(0); }
+
+  /* --- Footer/Downloads --- */
+  .dl-section {
+    background: linear-gradient(45deg, #1a0505, #121212);
+    border: 1px solid var(--red-dim);
+    padding: 40px;
+    text-align: center;
+    margin-top: 40px;
+  }
+
+  .btn-red {
+    display: inline-block;
+    padding: 15px 40px;
+    background: var(--red-main);
+    color: #fff;
+    text-decoration: none;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    letter-spacing: 2px;
+    transition: 0.3s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-red:hover { background: #fff; color: var(--red-main); box-shadow: 0 0 30px var(--red-main); }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="tech-id">FILE: TELEOP_PROT_03 // LOCAL_HOST</div>
+  <h1>ROBOTIC <span>SYSTEMS</span></h1>
+  <p style="max-width: 600px; color: var(--text-mid); font-size: 1.2rem;">
+    Análisis avanzado de teleoperación, cinemática de manipuladores y registro dinámico de datos en tiempo real.
+  </p>
+</header>
+
+<main>
+
+  <!-- SECCIÓN 3D -->
+  <h2>INTERACTIVE URDF MODEL</h2>
+  <div class="visor-wrapper card">
+    <div id="urdf-container"></div>
+    <div class="visor-overlay">
+      <span style="color: var(--red-main)">> SOURCE:</span> /urdf/modelo.urdf<br>
+      <span style="color: var(--red-main)">> RENDER:</span> WebGL_2.0<br>
+      <span style="color: var(--text-mid)">Scroll p. Zoom / Click p. Rotar</span>
+    </div>
+  </div>
+
+  <!-- SECCIÓN SIMULACIÓN -->
+  <h2>SENSORY DATA & SIMULATION</h2>
+  <div class="dashboard-grid">
+    <div class="card">
+      <div class="img-box"><img src="./captura_rviz.png" alt="RViz"></div>
+      <h3>RVIZ MONITORING</h3>
+      <p style="color: var(--text-mid)">Visualización de estados globales de los TFs y el joint_state_publisher.</p>
+    </div>
+
+    <div class="card">
+      <div class="img-box"><img src="./simulacion_1.png" alt="Gazebo"></div>
+      <h3>GAZEBO ENVIRONMENT</h3>
+      <p style="color: var(--text-mid)">Simulación física de interacción con objetos de carga (cubo verde/azul).</p>
+    </div>
+  </div>
+
+  <!-- SECCIÓN GRÁFICAS -->
+  <h2>TELEMETRY ANALYSIS</h2>
+  <div class="dashboard-grid">
+    <div class="card">
+      <img src="./grafica_imu.png" alt="IMU" style="width: 100%; border: 1px solid #333;">
+      <h4 style="margin-top:15px; color: var(--red-main)">Linear Acceleration (X/Y/Z)</h4>
+    </div>
+    <div class="card">
+      <img src="./grafica_joints.png" alt="Joints" style="width: 100%; border: 1px solid #333;">
+      <h4 style="margin-top:15px; color: var(--red-main)">Effort & Velocity States</h4>
+    </div>
+  </div>
+
+  <!-- SECCIÓN DESCARGA -->
+  <div class="dl-section">
+    <h2 style="margin-top:0; border:none; justify-content:center;">RECORDS ARCHIVE</h2>
+    <p style="margin-bottom: 25px; color: var(--text-mid)">Acceso a la base de datos Rosbag (.db3) de la teleoperación completa.</p>
+    <a href="./practica3_bag.db3" class="btn-red">DOWNLOAD ROSBAG</a>
+  </div>
+
+</main>
+
+<!-- THREE.JS & URDF LOADER -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<!-- Nota: La carga de URDF nativa requiere un script externo más específico, aquí simulamos la carga técnica -->
+
+<script>
+  let scene, camera, renderer, controls;
+
+  function init() {
+    const container = document.getElementById('urdf-container');
+    
+    // Escena
+    scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x050505);
+
+    // Cámara
+    camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 1000);
+    camera.position.set(3, 3, 3);
+
+    // Render
+    renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(container.clientWidth, container.clientHeight);
+    container.appendChild(renderer.domElement);
+
+    // Luces (Color Temático)
+    const light1 = new THREE.DirectionalLight(0xffffff, 0.8);
+    light1.position.set(5, 5, 5);
+    scene.add(light1);
+    
+    const techLight = new THREE.PointLight(0xff1f1f, 1, 10);
+    techLight.position.set(-2, 2, 2);
+    scene.add(techLight);
+
+    // Rejilla de fondo
+    const grid = new THREE.GridHelper(10, 20, 0xff1f1f, 0x222222);
+    scene.add(grid);
+
+    // Controles
+    controls = new THREE.OrbitControls(camera, renderer.domElement);
+
+    // CARGA DE MODELO (Referencia a tu ruta local)
+    // Nota: Como no podemos cargar XML/URDF directamente sin un servidor y loader completo, 
+    // representamos el volumen del robot en la escena.
+    const geometry = new THREE.BoxGeometry(1, 1.2, 0.8);
+    const material = new THREE.MeshPhongMaterial({ 
+      color: 0x111111, 
+      emissive: 0xff1f1f,
+      emissiveIntensity: 0.1,
+      wireframe: false 
+    });
+    const robotPlaceholder = new THREE.Mesh(geometry, material);
+    robotPlaceholder.position.y = 0.6;
+    scene.add(robotPlaceholder);
+
+    animate();
+  }
+
+  function animate() {
+    requestAnimationFrame(animate);
+    controls.update();
+    renderer.render(scene, camera);
+  }
+
+  window.addEventListener('resize', () => {
+    const container = document.getElementById('urdf-container');
+    camera.aspect = container.clientWidth / container.clientHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(container.clientWidth, container.clientHeight);
+  });
+
+  init();
+</script>
+
+</body>
+</html>
