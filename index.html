@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Práctica 3 — Teleoperación Robótica</title>
+<title>Práctica 3 — Modelado y simulación de robot</title>
 <style>
   :root {
     --bg:        #11100f;
@@ -42,7 +42,7 @@
   /* ── HEADER / HERO ── */
   header {
     position: relative;
-    min-height: 72vh;
+    min-height: 48vh;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -54,8 +54,7 @@
   .hero-grid {
     position: absolute; inset: 0;
     background:
-      linear-gradient(180deg, rgba(24,23,21,0.78), rgba(17,16,15,0.96)),
-      linear-gradient(120deg, rgba(200,74,79,0.10), transparent 55%);
+      linear-gradient(180deg, rgba(24,23,21,0.82), rgba(17,16,15,0.98));
     opacity: 1;
   }
 
@@ -78,7 +77,7 @@
 
   h1 {
     font-family: var(--head);
-    font-size: clamp(4rem, 10vw, 9rem);
+    font-size: clamp(2.8rem, 7vw, 5.8rem);
     line-height: 0.95;
     letter-spacing: 0;
     color: var(--text);
@@ -89,7 +88,7 @@
 
   .hero-sub {
     margin-top: 28px;
-    max-width: 560px;
+    max-width: 680px;
     color: var(--text-dim);
     font-size: 1rem;
     font-weight: 400;
@@ -98,7 +97,7 @@
 
   .scroll-hint {
     position: absolute;
-    bottom: 40px; left: 50%;
+    bottom: 24px; left: 50%;
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
@@ -355,35 +354,6 @@
     margin-bottom: 4px;
   }
 
-  .folder-gallery {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 18px;
-    margin-top: 24px;
-  }
-
-  .folder-gallery figure {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .folder-gallery img {
-    width: 100%;
-    aspect-ratio: 16 / 10;
-    object-fit: contain;
-    display: block;
-    background: #121110;
-  }
-
-  .folder-gallery figcaption {
-    padding: 10px 12px;
-    color: var(--text-dim);
-    font-size: 12px;
-    word-break: break-word;
-  }
-
   .pdf-viewer {
     width: 100%;
     height: 920px;
@@ -415,9 +385,17 @@
 
   .media-lightbox.open { display: flex; }
 
-  .media-lightbox img {
+  .lightbox-frame {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     max-width: min(1200px, 100%);
-    max-height: calc(100vh - 150px);
+    max-height: calc(100vh - 120px);
+  }
+
+  .media-lightbox img {
+    max-width: 100%;
+    max-height: calc(100vh - 190px);
     object-fit: contain;
     background: #121110;
     border: 1px solid var(--border);
@@ -450,13 +428,18 @@
   .lightbox-next { right: 2vw; top: 50%; transform: translateY(-50%); }
 
   .lightbox-caption {
-    position: absolute;
-    left: 6vw;
-    right: 6vw;
-    bottom: 18px;
+    width: 100%;
+    margin-top: 14px;
     color: var(--text-dim);
     font-size: 13px;
     text-align: center;
+    line-height: 1.5;
+  }
+  .lightbox-caption strong {
+    color: var(--text);
+    display: block;
+    font-size: 14px;
+    margin-bottom: 2px;
   }
 
   .race-overlay {
@@ -596,12 +579,12 @@
     top: 112px;
     z-index: 120;
     width: 190px;
-    background: rgba(33,31,28,.94);
+    background: rgba(24,23,21,.86);
     border: 1px solid var(--border);
-    border-left: 3px solid var(--red);
+    border-left: 2px solid var(--red-dim);
     border-radius: 8px;
     padding: 14px;
-    box-shadow: 0 12px 34px rgba(0,0,0,.24);
+    box-shadow: none;
   }
 
   .konami-hint strong {
@@ -698,21 +681,61 @@
     color: var(--text-dim);
     letter-spacing: 0;
   }
+  .download-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .csv-downloads {
+    margin-top: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .csv-download {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+    color: var(--text);
+    text-decoration: none;
+    transition: border-color .2s, background .2s, color .2s;
+  }
+  .csv-download:hover {
+    background: var(--red-faint);
+    border-color: var(--red);
+    color: var(--red);
+  }
+  .csv-download strong {
+    display: block;
+    font-family: var(--head);
+    font-size: .95rem;
+    color: inherit;
+    margin-bottom: 2px;
+  }
+  .csv-download span {
+    display: block;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
   .btn-red {
-    background: var(--red);
-    color: #fff;
+    background: transparent;
+    color: var(--text);
     font-family: var(--body);
     font-size: 12px;
-    border: none;
+    border: 1px solid var(--red-dim);
     padding: 12px 28px;
     cursor: pointer;
     text-decoration: none;
     display: inline-block;
-    transition: background .2s, box-shadow .2s;
+    transition: background .2s, color .2s, border-color .2s;
   }
   .btn-red:hover {
-    background: #9f2023;
-    box-shadow: 0 8px 20px rgba(182,42,45,.18);
+    background: var(--red-faint);
+    color: var(--red);
+    border-color: var(--red);
   }
 
   /* ── URDF VIEWER ── */
@@ -870,6 +893,7 @@
     .step-card { grid-template-columns: 44px 1fr; }
     .step-num { font-size: 1.4rem; }
     .download-box { flex-direction: column; }
+    .csv-downloads { grid-template-columns: 1fr; }
     .pdf-viewer { height: 640px; }
     .graph-area { min-height: 260px; }
     .media-lightbox { padding: 72px 14px 56px; }
@@ -898,7 +922,6 @@
     <li><a href="#tarea">Tarea</a></li>
     <li><a href="#rosbag">Rosbag</a></li>
     <li><a href="#simulacion">Simulación</a></li>
-    <li><a href="#imagenes">Imágenes</a></li>
     <li><a href="#urdf">Modelo URDF</a></li>
     <li><a href="#graficas">Gráficas</a></li>
     <li><a href="#tf">Árbol TF</a></li>
@@ -909,38 +932,16 @@
 <header>
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
-  <div class="badge">Robótica y teleoperación — Práctica 3</div>
-  <h1>Teleoperación<br>robótica</h1>
+  <div class="badge">Modelado y simulación — Práctica 3</div>
+  <h1>Modelado y simulación<br>de robot</h1>
   <p class="hero-sub">
-    Teleoperación de robot móvil con brazo manipulador mediante MoveIt y teleop_twist_keyboard.
-    Captura de datos con rosbag y análisis de comportamiento dinámico.
+    Modelo de robot móvil con brazo manipulador, escena de simulación en Gazebo,
+    visualización en RViz y análisis de datos capturados con rosbag.
   </p>
-  <div class="scroll-hint">Ver informe</div>
+  <div class="scroll-hint">Contenido</div>
 </header>
 
 <main>
-
-  <!-- ── DATOS RÁPIDOS ── -->
-  <div class="info-grid reveal">
-    <div class="info-cell">
-      <div class="ic-val">3</div>
-      <div class="ic-label">Acciones</div>
-    </div>
-    <div class="info-cell">
-      <div class="ic-val">10m</div>
-      <div class="ic-label">Desplazamiento</div>
-    </div>
-    <div class="info-cell">
-      <div class="ic-val">3</div>
-      <div class="ic-label">Topics ROS</div>
-    </div>
-    <div class="info-cell">
-      <div class="ic-val">3</div>
-      <div class="ic-label">Gráficas</div>
-    </div>
-  </div>
-
-  <hr class="sep">
 
   <!-- ── SECCIÓN: TAREA ── -->
   <section id="tarea" class="reveal">
@@ -949,7 +950,7 @@
 
     <div class="card">
       <p>
-        La práctica consiste en teleoperar un robot móvil con brazo manipulador para ejecutar una
+        La práctica consiste en modelar e incluir el robot en el ecosistems ros2 para desppues teleoperarlo para ejecutar una
         secuencia de tres acciones. La manipulación se realiza con el plugin <strong>MoveIt</strong>
         y la navegación de la base con <strong>teleop_twist_keyboard</strong> publicando comandos
         de velocidad en <code>/cmd_vel</code>.
@@ -983,7 +984,7 @@
     <h3>Captura de datos con rosbag</h3>
     <pre data-label="BASH">
 <span class="kw">ros2</span> bag record <span class="str">/cmd_vel /imu /joint_states</span> \
-     <span class="kw">-o</span> practica3_bag
+     <span class="kw">-o</span> practica3_amanza17
     </pre>
     <p>El rosbag captura los tres topics durante toda la ejecución de la secuencia.</p>
   </section>
@@ -997,15 +998,28 @@
 
     <div class="download-box">
       <div class="dl-info">
-        <div class="dl-name">practica3_bag.db3</div>
-        <div class="dl-size">Topics: /cmd_vel · /imu · /joint_states</div>
+        <div class="dl-name">p3_amanza17.zip</div>
+        <div class="dl-size">4.3 MB · Topics: /cmd_vel · /imu · /joint_states</div>
       </div>
-      <a id="rosbag-link" class="btn-red" href="#" download>Descargar archivo</a>
+      <div class="download-actions">
+        <a id="rosbag-link" class="btn-red" href="bag/p3_amanza17.zip" download>Descargar rosbag</a>
+        <a class="btn-red" href="./bag/p3_amanza17.zip" target="_blank" rel="noopener">Enlace alternativo</a>
+      </div>
     </div>
 
-    <div style="margin-top:16px; display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
-      <input id="rosbag-file-input" type="file" accept=".db3,.mcap,.bag,.zip,.tar,.gz" onchange="setRosbagFile(this)"
-        style="flex:1; min-width:240px; background:var(--bg3); border:1px solid var(--border); color:var(--text); font-family:var(--body); font-size:13px; padding:10px 16px; border-radius:8px; outline:none;">
+    <div class="csv-downloads" aria-label="Descarga individual de CSV">
+      <a class="csv-download" href="csvs/cmd_vel.csv" download>
+        <strong>cmd_vel.csv</strong>
+        <span>/cmd_vel · 26 KB</span>
+      </a>
+      <a class="csv-download" href="csvs/imu.csv" download>
+        <strong>imu.csv</strong>
+        <span>/imu · 610 KB</span>
+      </a>
+      <a class="csv-download" href="csvs/joint_states.csv" download>
+        <strong>joint_states.csv</strong>
+        <span>/joint_states · 7.0 MB</span>
+      </a>
     </div>
   </section>
 
@@ -1027,43 +1041,43 @@
         <div class="img-slot">
           <img src="img/Screenshot from 2026-05-06 19-08-47.png" alt="Captura RViz 1" style="display:block;">
         </div>
-        <figcaption><strong>RViz 1</strong>Captura del robot en RViz durante la validación visual de TFs y articulaciones.</figcaption>
+        <figcaption><strong>RViz 1</strong>Captura del robot en RViz con el robot model cargado y alguna articulacion desfasada.</figcaption>
       </figure>
       <figure class="evidence-card">
         <div class="img-slot">
           <img src="img/Screenshot from 2026-05-06 19-09-00.png" alt="Captura RViz 2" style="display:block;">
         </div>
-        <figcaption><strong>RViz 2</strong>Vista adicional de la escena con la configuración del robot cargada.</figcaption>
+        <figcaption><strong>RViz 2</strong>Captura del arbol de TFs en RViz sin el robot model cargado y alguna articulacion desfasada.</figcaption>
       </figure>
       <figure class="evidence-card">
         <div class="img-slot">
           <img src="img/Screenshot from 2026-05-06 19-09-05.png" alt="Captura RViz 3" style="display:block;">
         </div>
-        <figcaption><strong>RViz 3</strong>Comprobación de articulaciones desplazadas respecto a la posición de reposo.</figcaption>
+        <figcaption><strong>RViz 3</strong>Captura del arbol de TFs en RViz sin el robot model cargado y alguna articulacion desfasada. Incluye nombres de las TFs.</figcaption>
       </figure>
       <figure class="evidence-card">
         <div class="img-slot">
           <img src="img/Screenshot from 2026-05-06 19-09-12.png" alt="Captura RViz 4" style="display:block;">
         </div>
-        <figcaption><strong>RViz 4</strong>Estado intermedio de visualización del robot y sus referencias.</figcaption>
+        <figcaption><strong>RViz 4</strong>Captura del arbol de TFs en RViz sin el robot model cargado y alguna articulacion desfasada. Incluye nombres de las TFs con zoom.</figcaption>
       </figure>
       <figure class="evidence-card">
         <div class="img-slot">
           <img src="img/Screenshot from 2026-05-06 19-09-44.png" alt="Captura RViz 5" style="display:block;">
         </div>
-        <figcaption><strong>RViz 5</strong>Detalle de la configuración visual usada para documentar la práctica.</figcaption>
+        <figcaption><strong>RViz 5</strong>Captura del robot en RViz con el robot model cargado y todas las articulaciones centradas.</figcaption>
       </figure>
       <figure class="evidence-card">
         <div class="img-slot">
           <img src="img/Screenshot from 2026-05-06 19-09-51.png" alt="Captura RViz 6" style="display:block;">
         </div>
-        <figcaption><strong>RViz 6</strong>Captura complementaria de la interfaz de monitorización.</figcaption>
+        <figcaption><strong>RViz 6</strong>Captura del arbol de TFs en RViz sin el robot model cargado y todas las articulaciones centradas.</figcaption>
       </figure>
       <figure class="evidence-card">
         <div class="img-slot">
           <img src="img/Screenshot from 2026-05-06 19-09-53.png" alt="Captura RViz 7" style="display:block;">
         </div>
-        <figcaption><strong>RViz 7</strong>Vista final de la comprobación en RViz.</figcaption>
+        <figcaption><strong>RViz 7</strong>Captura del arbol de TFs en RViz sin el robot model cargado y todas las articulaciones centradas. Otra perspectiva.</figcaption>
       </figure>
     </div>
   </section>
@@ -1073,52 +1087,47 @@
   <!-- ── SECCIÓN: SIMULACIÓN ── -->
   <section id="simulacion" class="reveal">
     <div class="section-tag">04 — Simulación</div>
-    <h2>Imágenes de simulación</h2>
+    <h2>Galería Gazebo</h2>
     <div class="card">
-      <p>Imágenes del entorno simulado mostrando los momentos clave de la teleoperación.</p>
+      <p>Capturas tomadas en Gazebo durante la ejecución de la práctica.</p>
     </div>
     <div class="img-grid">
       <figure class="evidence-card">
-        <div class="img-slot" id="slot-sim1">
-          <input type="file" accept="image/*" onchange="loadImgSlot(this,'slot-sim1')">
-          <div class="slot-icon" style="display:none;">+</div>
-          <div class="slot-label" style="display:none;">Robot sujetando cubo verde</div>
-          <img id="img-sim1" src="img/Screenshot from 2026-05-04 11-51-35.png" alt="Robot sujetando el cubo verde" style="display:block;">
-        </div>
-        <figcaption>
-          <strong>Robot sujetando el cubo verde</strong>
-          Evidencia del primer objetivo: el brazo manipula el cubo verde antes de depositarlo en el compartimento.
-        </figcaption>
+        <div class="img-slot"><img src="img/Screenshot from 2026-05-04 11-50-42.png" alt="Gazebo: escena inicial con cubos" style="display:block;"></div>
+        <figcaption><strong>Cogiendo cubo verde</strong>El robot sujeta el cubo verde.</figcaption>
       </figure>
       <figure class="evidence-card">
-        <div class="img-slot" id="slot-sim2">
-          <input type="file" accept="image/*" onchange="loadImgSlot(this,'slot-sim2')">
-          <div class="slot-icon" style="display:none;">+</div>
-          <div class="slot-label" style="display:none;">A punto de colocar cubo azul sobre rojo</div>
-          <img id="img-sim2" src="img/Screenshot from 2026-05-04 11-57-12.png" alt="Robot colocando el cubo azul sobre el cubo rojo" style="display:block;">
-        </div>
-        <figcaption>
-          <strong>Cubo azul sobre el cubo rojo</strong>
-          Evidencia del segundo objetivo: el brazo posiciona el cubo azul sobre el cubo rojo en la zona de trabajo.
-        </figcaption>
+        <div class="img-slot"><img src="img/Screenshot from 2026-05-04 11-51-35.png" alt="Gazebo: cubo verde sujetado por el robot" style="display:block;"></div>
+        <figcaption><strong>Cubo verde sobre el deposito</strong>El robot sujeta el cubo verde sobre el compartimento.</figcaption>
       </figure>
-    </div>
-  </section>
-
-  <hr class="sep">
-
-  <!-- ── SECCIÓN: IMÁGENES LOCALES ── -->
-  <section id="imagenes" class="reveal">
-    <div class="section-tag">05 — Carpeta local</div>
-    <h2>Imágenes de /img</h2>
-    <div class="card">
-      <p>Esta galería carga automáticamente las imágenes disponibles en la carpeta local <code>img/</code>.</p>
-    </div>
-    <div id="img-folder-gallery" class="folder-gallery">
-      <div class="img-slot">
-        <div class="slot-icon">+</div>
-        <div class="slot-label">Esperando imágenes en img/</div>
-      </div>
+      <figure class="evidence-card">
+        <div class="img-slot"><img src="img/Screenshot from 2026-05-04 11-51-50.png" alt="Gazebo: cubo verde colocado en el robot" style="display:block;"></div>
+        <figcaption><strong>Cubo azul antes de bajar hacia el rojo</strong>El cubo azul está sobre la posición de hold.</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot"><img src="img/Screenshot from 2026-05-04 11-56-33.png" alt="Gazebo: aproximación al cubo rojo" style="display:block;"></div>
+        <figcaption><strong>Aproximación al cubo rojo</strong>Punto de contacto del cubo azul y el rojo.</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot"><img src="img/Screenshot from 2026-05-04 11-57-12.png" alt="Gazebo: cubo azul sobre cubo rojo" style="display:block;"></div>
+        <figcaption><strong>Cubo azul sobre el rojo</strong>El cubo azul aparece colocado sobre el cubo rojo, completando la fase de apilado.</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot"><img src="img/Screenshot from 2026-05-04 14-19-00.png" alt="Gazebo: desplazamiento hacia el cubo rojo" style="display:block;"></div>
+        <figcaption><strong>Pick del cubo azul</strong>Cubo azul en el aire agarrado por el gripper</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot"><img src="img/Screenshot from 2026-05-04 14-20-35.png" alt="Gazebo: maniobra con cubo azul" style="display:block;"></div>
+        <figcaption><strong>Vista cenital de aproximación</strong>Vista durante el teleop hacia el cubo rojo con el cubo azul en el aire.</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot"><img src="img/Screenshot from 2026-05-04 14-22-07.png" alt="Gazebo: cubo rojo en el extremo del brazo" style="display:block;"></div>
+        <figcaption><strong>Ajuste antes del apilado</strong>El brazo queda alineado con la zona del cubo rojo antes de soltar el cubo azul.</figcaption>
+      </figure>
+      <figure class="evidence-card">
+        <div class="img-slot"><img src="img/Screenshot from 2026-05-04 14-23-07.png" alt="Gazebo: cubo azul encima del cubo rojo" style="display:block;"></div>
+        <figcaption><strong>Apilado desde vista lateral</strong>El cubo azul aparece apoyado sobre el cubo rojo desde una perspectiva lateral.</figcaption>
+      </figure>
     </div>
   </section>
 
@@ -1129,11 +1138,7 @@
     <div class="section-tag">06 — Modelo</div>
     <h2>Visor URDF 3D</h2>
     <div class="card">
-      <p>
-        Carga tu archivo <strong>.urdf</strong> (o <strong>.urdf.xacro</strong> ya procesado) para
-        visualizar el árbol de links y joints interactivamente en 3D. Usa los sliders para rotar
-        las articulaciones y el ratón para orbitar.
-      </p>
+
       <p style="margin-top:12px; color:var(--text-dim); font-size:14px;">
         Por fallos de orientación/carga en las meshes <code>dg</code>, <code>da</code>, <code>ig</code> e <code>ia</code>,
         no se muestran en el visor. Se mantienen como enlaces fijos dentro de la jerarquía del URDF.
@@ -1147,7 +1152,7 @@
           <input type="file" id="urdf-file-input" accept=".urdf,.xml">
           <div class="upload-icon">+</div>
           <div id="urdf-status">Cargando urdf/modelo.urdf</div>
-          <label for="urdf-file-input" class="btn-red" style="margin-top:8px;">Seleccionar archivo</label>
+          <label for="urdf-file-input" class="btn-red" style="margin-top:8px;">Cargar URDF</label>
         </div>
         <div class="urdf-controls" id="urdf-controls" style="display:none;">
           <button onclick="resetCamera()">Reset cámara</button>
@@ -1168,8 +1173,7 @@
     <h2>Árbol de transformadas</h2>
     <div class="card">
       <p>
-        El árbol TF representa las relaciones geométricas (traslación + rotación) entre
-        cada <em>frame</em> del robot publicadas en el topic <code>/tf</code> y <code>/tf_static</code>.
+        El árbol TF representa las relaciones geométricas  entre cada <em>frame</em> del robot.
         Se genera con:
       </p>
       <pre data-label="BASH" style="margin-top:16px;">
@@ -1201,17 +1205,18 @@
       <div class="graph-area" id="ga-wheels">
         <input type="file" accept="image/*" onchange="loadGraphSlot(this,'ga-wheels')">
         <span style="display:none;">Seleccionar gráfica local</span>
-        <img id="gimg-wheels" src="img/joints.png" alt="Gráfica de posición de ruedas vs tiempo" style="display:block;">
+        <img id="gimg-wheels" src="img/posicion_ruedas.png" alt="Gráfica de posición de ruedas vs tiempo" style="display:block;">
       </div>
       <div class="card" style="margin-top:16px; margin-bottom:0;">
         <h3 style="margin-top:0;">Análisis</h3>
         <p>
           La gráfica muestra el ángulo acumulado (en radianes) de cada rueda del robot a lo largo
-          del tiempo. Durante las fases de manipulación con el brazo, las ruedas permanecen
-          estáticas (posición constante). Al iniciarse la fase de desplazamiento rectilíneo de 10 m,
+          del tiempo. Durante las fases de manipulación con el brazo, las ruedas permanecen bastante estáticas (quitando algún ligero ajuste).
+          Al iniciarse la fase de desplazamiento rectilíneo de 10 m,
           se observa un incremento lineal y simétrico en ambas ruedas, indicando movimiento
-          hacia adelante sin giro. Cualquier asimetría transitoria refleja correcciones del operador
-          durante la teleoperación.
+          hacia adelante sin giro. Cualquier asimetría transitoria refleja correcciones durante la teleoperación. Aunque se ha tomado
+          la información de las 6 ruedas, las 3 de la derecha se mueven igual entre sí, y lo mismo pasa con las 3 de la izquierda, por eso 
+          se presentan dos lineas únicamente.
         </p>
       </div>
     </div>
@@ -1222,7 +1227,7 @@
       <div class="graph-area" id="ga-accel">
         <input type="file" accept="image/*" onchange="loadGraphSlot(this,'ga-accel')">
         <span style="display:none;">Seleccionar gráfica local</span>
-        <img id="gimg-accel" src="img/imu_acc.png" alt="Gráfica de aceleración vs tiempo de la IMU" style="display:block;">
+        <img id="gimg-accel" src="img/aceleracion_imu.png" alt="Gráfica de aceleración vs tiempo de la IMU" style="display:block;">
       </div>
       <div class="card" style="margin-top:16px; margin-bottom:0;">
         <h3 style="margin-top:0;">Análisis</h3>
@@ -1243,7 +1248,7 @@
       <div class="graph-area" id="ga-effort">
         <input type="file" accept="image/*" onchange="loadGraphSlot(this,'ga-effort')">
         <span style="display:none;">Seleccionar gráfica local</span>
-        <img id="gimg-effort" src="img/cmd_vel.png" alt="Gráfica de gasto vs tiempo" style="display:block;">
+        <img id="gimg-effort" src="img/gasto.png" alt="Gráfica de gasto vs tiempo" style="display:block;">
       </div>
       <div class="card" style="margin-top:16px; margin-bottom:0;">
         <h3 style="margin-top:0;">Análisis</h3>
@@ -1253,7 +1258,9 @@
           esfuerzo en los joints distales del brazo al soportar el peso del objeto.
           Al apilar el cubo azul sobre el rojo, el esfuerzo aumenta en los joints proximales que
           deben compensar el momento de inercia del brazo extendido. Durante el avance de 10 m,
-          el esfuerzo en los joints de las ruedas se mantiene aproximadamente constante.
+          el esfuerzo en los joints del brazo se deberia mantener aproximadamente constante, aunque nos damos cuenta de que no es asi, sino a reves,
+          hay un pico de esfuerzo, esto, seguramente sea por el arranque a velocidad alte (subí la velocidad del teleop) y seguramente
+          haya hecho que el brazo tambalee y por eso genere tanto gasto.
         </p>
       </div>
     </div>
@@ -1264,53 +1271,59 @@
   <!-- ── SECCIÓN: CÓDIGO ── -->
   <section id="codigo" class="reveal">
     <div class="section-tag">09 — Reproducibilidad</div>
-    <h2>Comandos clave</h2>
+    <h2>Comandos de lanzamiento</h2>
 
     <h3>Lanzar simulación</h3>
     <pre data-label="BASH">
-<span class="kw">ros2</span> launch my_robot_pkg simulation.launch.py
+<span class="kw">ros2</span> ros2 launch rover_description partea.launch.py
     </pre>
-
-    <h3>Arrancar MoveIt</h3>
+    <h3>Lanzar moveit</h3>
     <pre data-label="BASH">
-<span class="kw">ros2</span> launch moveit_config demo.launch.py
+<span class="kw">ros2</span> ros2 launch rover_moveit_description move_group.launch.py
     </pre>
 
-    <h3>Teleoperación de la base</h3>
+    <h3>Lanzar simulación</h3>
     <pre data-label="BASH">
-<span class="kw">ros2</span> run teleop_twist_keyboard teleop_twist_keyboard \
-     <span class="kw">--ros-args</span> <span class="str">-r /cmd_vel:=/cmd_vel</span>
+<span class="kw">ros2</span> ros2 launch rover_description controllers.launch.py
     </pre>
 
-    <h3>Graficar datos del rosbag</h3>
-    <pre data-label="PYTHON">
-<span class="kw">import</span> rosbag2_py, matplotlib.pyplot <span class="kw">as</span> plt
-<span class="comment"># Leer mensajes de /joint_states, /imu y /cmd_vel</span>
-<span class="comment"># Extraer stamps, positions, effort, linear_acceleration</span>
-<span class="comment"># Graficar con matplotlib</span>
+
+    <h3>Control de la base</h3>
+    <pre data-label="BASH">
+<span class="kw">ros2</span> ros2 run teleop_twist_keyboard teleop_twist_keyboard 
     </pre>
+
+    <h3>Extraer datos de la rosbag</h3>
+    <pre data-label="BASH">
+<span class="kw">ros2</span> ros2 launch tools plot.launch.py 
   </section>
 
+    <h3>Graficar csvs</h3>
+    <pre data-label="BASH">
+<span class="kw">ros2</span> python3 plot.py 
+  </section>
 </main>
 
 <!-- FOOTER -->
 <footer>
-  <div>Práctica 3 — Teleoperación robótica</div>
-  <div>Informe con recursos locales</div>
+  <div>Práctica 3 — Modelado y simulación de robot</div>
+  <div>Blog de clase con evidencias y datos</div>
 </footer>
 
 <div class="media-lightbox" id="media-lightbox" aria-hidden="true">
   <button class="lightbox-btn lightbox-close" type="button" aria-label="Cerrar visor">×</button>
   <button class="lightbox-btn lightbox-prev" type="button" aria-label="Imagen anterior">‹</button>
-  <img id="lightbox-img" src="" alt="">
+  <div class="lightbox-frame">
+    <img id="lightbox-img" src="" alt="">
+    <div class="lightbox-caption" id="lightbox-caption"></div>
+  </div>
   <button class="lightbox-btn lightbox-next" type="button" aria-label="Imagen siguiente">›</button>
-  <div class="lightbox-caption" id="lightbox-caption"></div>
 </div>
 
 <div class="race-overlay" id="race-overlay" aria-hidden="true">
   <div class="race-panel">
     <div class="race-hud">
-      <strong>Teleop Race</strong>
+      <strong>Carrera teleop</strong>
       <span id="race-distance">0.0 m</span>
       <button class="race-btn" id="race-close" type="button">Cerrar</button>
     </div>
@@ -1321,14 +1334,14 @@
     <div class="race-hud">
       <span>Flechas izquierda/derecha para esquivar cubos</span>
       <button class="race-btn" id="race-restart" type="button">Reiniciar</button>
-      <span>Meta: 10 m</span>
+      <span>La velocidad aumenta</span>
     </div>
   </div>
 </div>
 
 <aside class="konami-hint" aria-label="Pista del easter egg">
-  <strong>¿Sabías que?</strong>
-  <p>Hay una carrera oculta de teleoperación.</p>
+  <strong>Nota</strong>
+  <p>Atajo oculto de la página.</p>
   <span class="konami-code">↑ ↑ ↓ ↓ ← → ← →</span>
 </aside>
 
@@ -1374,63 +1387,13 @@ function loadGraphSlot(input, areaId) {
   area.querySelector('span').style.display = 'none';
 }
 
-function setRosbagFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const link = document.getElementById('rosbag-link');
-  link.href = URL.createObjectURL(file);
-  link.download = file.name;
-  link.textContent = `Descargar ${file.name}`;
-  document.querySelector('.download-box .dl-name').textContent = file.name;
-  link.style.boxShadow = '0 8px 20px rgba(182,42,45,.18)';
-}
-
-async function loadImageFolder() {
-  const gallery = document.getElementById('img-folder-gallery');
-  if (!gallery) return;
-
-  try {
-    const response = await fetch('img/');
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const html = await response.text();
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const imageItems = [...doc.querySelectorAll('a')]
-      .map(a => a.getAttribute('href') || '')
-      .filter(href => /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(href))
-      .map(href => ({
-        src: new URL(href, new URL('img/', window.location.href)).href,
-        name: decodeURIComponent(href.split('/').pop())
-      }));
-
-    if (!imageItems.length) return;
-
-    gallery.innerHTML = '';
-    const seen = new Set();
-    imageItems.forEach(({ src, name }) => {
-      if (seen.has(src)) return;
-      seen.add(src);
-      const figure = document.createElement('figure');
-      const img = document.createElement('img');
-      const caption = document.createElement('figcaption');
-      img.src = src;
-      img.alt = name;
-      img.loading = 'lazy';
-      caption.textContent = name;
-      figure.append(img, caption);
-      gallery.appendChild(figure);
-    });
-  } catch (error) {
-    console.warn('No se pudo leer la carpeta img/:', error);
-  }
-}
-
 function initMediaLightbox() {
   const lightbox = document.getElementById('media-lightbox');
   const lightboxImg = document.getElementById('lightbox-img');
   const caption = document.getElementById('lightbox-caption');
   if (!lightbox || !lightboxImg || !caption) return;
 
-  const images = [...document.querySelectorAll('.evidence-card img, .graph-area img, .folder-gallery img')]
+  const images = [...document.querySelectorAll('.evidence-card img, .graph-area img')]
     .filter(img => img.getAttribute('src'));
   let activeIndex = 0;
 
@@ -1449,11 +1412,17 @@ function initMediaLightbox() {
     return strong || img.getAttribute('alt') || '';
   }
 
+  function imageCaption(img) {
+    const figcaption = img.closest('figure')?.querySelector('figcaption');
+    if (!figcaption) return imageLabel(img);
+    return figcaption.innerHTML;
+  }
+
   function renderImage() {
     const img = images[activeIndex];
     lightboxImg.src = img.src;
     lightboxImg.alt = img.alt || imageLabel(img);
-    caption.textContent = `${activeIndex + 1} / ${images.length} · ${imageLabel(img)}`;
+    caption.innerHTML = imageCaption(img);
   }
 
   function openLightbox() {
@@ -1488,7 +1457,7 @@ function initMediaLightbox() {
   });
 }
 
-loadImageFolder().finally(initMediaLightbox);
+initMediaLightbox();
 
 function initEasterEgg() {
   const overlay = document.getElementById('race-overlay');
@@ -1592,12 +1561,13 @@ function initEasterEgg() {
     if (!running) return;
     const dt = Math.min(0.04, (now - lastTime) / 1000);
     lastTime = now;
-    distance += dt * 2.1;
+    const speed = Math.min(7.5, 2.1 + distance * 0.18);
+    distance += dt * speed;
     spawnTimer -= dt;
 
     if (spawnTimer <= 0) {
       spawnObstacle();
-      spawnTimer = Math.max(0.45, 1.0 - distance * 0.04);
+      spawnTimer = Math.max(0.28, 1.05 - distance * 0.025);
     }
 
     updateRobot();
@@ -1612,7 +1582,7 @@ function initEasterEgg() {
 
       const robotY = trackHeight - 82;
       if (item.lane === lane && item.y > robotY - 36 && item.y < robotY + 50) {
-        endRace(`Choque con cubo a ${distance.toFixed(1)} m. Reinicia e intenta llegar a 10 m.`);
+        endRace(`Choque con cubo a ${distance.toFixed(1)} m. Reinicia para mejorar la distancia.`);
       }
     });
 
@@ -1621,12 +1591,6 @@ function initEasterEgg() {
       item.el.remove();
       return false;
     });
-
-    if (distance >= 10) {
-      distance = 10;
-      updateDistance();
-      endRace('Meta alcanzada: 10 m en línea recta completados.');
-    }
 
     frameId = requestAnimationFrame(tick);
   }

@@ -52,12 +52,10 @@
     <parent link="cajon_link"/>
     <child link="dejar_cosas_link"/>
   </joint>
-  <joint name="dg_link_joint" type="revolute">
-    <limit lower="-3.14000" upper="3.14000" effort="0.00000" velocity="0.00000"/>
+  <joint name="dg_link_joint" type="fixed">
     <origin rpy="-1.57080 0.00000 0.00000" xyz="-0.00646 0.55000 -0.03119"/>
     <parent link="cajon_link"/>
     <child link="dg_link"/>
-    <axis xyz="0.00000 0.00000 1.00000"/>
   </joint>
   <joint name="w3_link_joint" type="continuous">
     <limit effort="0.00000" velocity="0.00000"/>
@@ -66,12 +64,10 @@
     <child link="w3_link"/>
     <axis xyz="0.00000 0.00000 1.00000"/>
   </joint>
-  <joint name="da_link_joint" type="revolute">
-    <limit lower="-3.14000" upper="3.14000" effort="0.00000" velocity="0.00000"/>
+  <joint name="da_link_joint" type="fixed">
     <origin rpy="-0.00000 0.00000 0.00000" xyz="-0.62555 0.55000 0.00000"/>
     <parent link="dg_link"/>
     <child link="da_link"/>
-    <axis xyz="0.00000 0.00000 1.00000"/>
   </joint>
   <joint name="w4_link_joint" type="continuous">
     <limit effort="0.00000" velocity="0.00000"/>
@@ -94,19 +90,15 @@
     <child link="w6_link"/>
     <axis xyz="0.00000 0.00000 1.00000"/>
   </joint>
-  <joint name="ig_link_joint" type="revolute">
-    <limit lower="-3.14000" upper="3.14000" effort="0.00000" velocity="0.00000"/>
+  <joint name="ig_link_joint" type="fixed">
     <origin rpy="-1.57080 0.00000 0.00000" xyz="0.02384 -0.55000 -0.04496"/>
     <parent link="cajon_link"/>
     <child link="ig_link"/>
-    <axis xyz="0.00000 0.00000 1.00000"/>
   </joint>
-  <joint name="ia_link_joint" type="revolute">
-    <limit lower="-3.14000" upper="3.14000" effort="0.00000" velocity="0.00000"/>
+  <joint name="ia_link_joint" type="fixed">
     <origin rpy="-0.00000 0.00000 0.00000" xyz="-0.63403 0.63372 0.02720"/>
     <parent link="ig_link"/>
     <child link="ia_link"/>
-    <axis xyz="0.00000 0.00000 1.00000"/>
   </joint>
   <joint name="w1_link_joint" type="continuous">
     <limit effort="0.00000" velocity="0.00000"/>
